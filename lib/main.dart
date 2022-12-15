@@ -1,3 +1,4 @@
+import 'package:evolution_lab/bridge/bridge.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -33,7 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _incrementCounter() {
     setState(() {
-      _counter++;
+      _counter = bridge.countPlus(count: _counter);
     });
   }
 
