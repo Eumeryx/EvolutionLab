@@ -11,9 +11,122 @@ import 'package:meta/meta.dart';
 import 'dart:ffi' as ffi;
 
 abstract class Evolution {
-  int countPlus({required int count, dynamic hint});
+  Future<Life> create(
+      {required Shape shape, required Boundary boundary, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kCountPlusConstMeta;
+  FlutterRustBridgeTaskConstMeta get kCreateConstMeta;
+
+  Future<List<Position>> defaultCells({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kDefaultCellsConstMeta;
+
+  Future<List<Position>> evolveMethodLife(
+      {required Life that, int? step, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kEvolveMethodLifeConstMeta;
+
+  Future<void> cleanCellsMethodLife({required Life that, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kCleanCellsMethodLifeConstMeta;
+
+  Future<void> getCellsMethodLife({required Life that, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetCellsMethodLifeConstMeta;
+
+  Future<void> setCellsMethodLife(
+      {required Life that, required List<Position> cells, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetCellsMethodLifeConstMeta;
+
+  Future<void> setBoundaryMethodLife(
+      {required Life that, required Boundary boundary, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetBoundaryMethodLifeConstMeta;
+
+  DropFnType get dropOpaqueMutexArrayLife;
+  ShareFnType get shareOpaqueMutexArrayLife;
+  OpaqueTypeFinalizer get MutexArrayLifeFinalizer;
+}
+
+@sealed
+class MutexArrayLife extends FrbOpaque {
+  final Evolution bridge;
+  MutexArrayLife.fromRaw(int ptr, int size, this.bridge)
+      : super.unsafe(ptr, size);
+  @override
+  DropFnType get dropFn => bridge.dropOpaqueMutexArrayLife;
+
+  @override
+  ShareFnType get shareFn => bridge.shareOpaqueMutexArrayLife;
+
+  @override
+  OpaqueTypeFinalizer get staticFinalizer => bridge.MutexArrayLifeFinalizer;
+}
+
+/// 边界条件
+/// Sphere 循环;
+/// Mirror 镜像;
+/// None 截断;
+enum Boundary {
+  Sphere,
+  Mirror,
+  None,
+}
+
+class Life {
+  final Evolution bridge;
+  final MutexArrayLife field0;
+
+  Life({
+    required this.bridge,
+    required this.field0,
+  });
+
+  Future<List<Position>> evolve({int? step, dynamic hint}) =>
+      bridge.evolveMethodLife(
+        that: this,
+        step: step,
+      );
+
+  Future<void> cleanCells({dynamic hint}) => bridge.cleanCellsMethodLife(
+        that: this,
+      );
+
+  Future<void> getCells({dynamic hint}) => bridge.getCellsMethodLife(
+        that: this,
+      );
+
+  Future<void> setCells({required List<Position> cells, dynamic hint}) =>
+      bridge.setCellsMethodLife(
+        that: this,
+        cells: cells,
+      );
+
+  Future<void> setBoundary({required Boundary boundary, dynamic hint}) =>
+      bridge.setBoundaryMethodLife(
+        that: this,
+        boundary: boundary,
+      );
+}
+
+class Position {
+  final int x;
+  final int y;
+
+  Position({
+    required this.x,
+    required this.y,
+  });
+}
+
+class Shape {
+  final int x;
+  final int y;
+
+  Shape({
+    required this.x,
+    required this.y,
+  });
 }
 
 class EvolutionImpl implements Evolution {
@@ -25,42 +138,205 @@ class EvolutionImpl implements Evolution {
   factory EvolutionImpl.wasm(FutureOr<WasmModule> module) =>
       EvolutionImpl(module as ExternalLibrary);
   EvolutionImpl.raw(this._platform);
-  int countPlus({required int count, dynamic hint}) {
-    var arg0 = api2wire_i32(count);
-    return _platform.executeSync(FlutterRustBridgeSyncTask(
-      callFfi: () => _platform.inner.wire_count_plus(arg0),
-      parseSuccessData: _wire2api_SyncReturn_i32,
-      constMeta: kCountPlusConstMeta,
-      argValues: [count],
+  Future<Life> create(
+      {required Shape shape, required Boundary boundary, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_shape(shape);
+    var arg1 = api2wire_boundary(boundary);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_create(port_, arg0, arg1),
+      parseSuccessData: (d) => _wire2api_life(d),
+      constMeta: kCreateConstMeta,
+      argValues: [shape, boundary],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kCountPlusConstMeta =>
+  FlutterRustBridgeTaskConstMeta get kCreateConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
-        debugName: "count_plus",
-        argNames: ["count"],
+        debugName: "create",
+        argNames: ["shape", "boundary"],
       );
+
+  Future<List<Position>> defaultCells({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_default_cells(port_),
+      parseSuccessData: _wire2api_list_position,
+      constMeta: kDefaultCellsConstMeta,
+      argValues: [],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kDefaultCellsConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "default_cells",
+        argNames: [],
+      );
+
+  Future<List<Position>> evolveMethodLife(
+      {required Life that, int? step, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_life(that);
+    var arg1 = _platform.api2wire_opt_box_autoadd_u32(step);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_evolve__method__Life(port_, arg0, arg1),
+      parseSuccessData: _wire2api_list_position,
+      constMeta: kEvolveMethodLifeConstMeta,
+      argValues: [that, step],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kEvolveMethodLifeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "evolve__method__Life",
+        argNames: ["that", "step"],
+      );
+
+  Future<void> cleanCellsMethodLife({required Life that, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_life(that);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_clean_cells__method__Life(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kCleanCellsMethodLifeConstMeta,
+      argValues: [that],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kCleanCellsMethodLifeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "clean_cells__method__Life",
+        argNames: ["that"],
+      );
+
+  Future<void> getCellsMethodLife({required Life that, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_life(that);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_get_cells__method__Life(port_, arg0),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kGetCellsMethodLifeConstMeta,
+      argValues: [that],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kGetCellsMethodLifeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_cells__method__Life",
+        argNames: ["that"],
+      );
+
+  Future<void> setCellsMethodLife(
+      {required Life that, required List<Position> cells, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_life(that);
+    var arg1 = _platform.api2wire_list_position(cells);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_set_cells__method__Life(port_, arg0, arg1),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kSetCellsMethodLifeConstMeta,
+      argValues: [that, cells],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetCellsMethodLifeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_cells__method__Life",
+        argNames: ["that", "cells"],
+      );
+
+  Future<void> setBoundaryMethodLife(
+      {required Life that, required Boundary boundary, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_life(that);
+    var arg1 = api2wire_boundary(boundary);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_set_boundary__method__Life(port_, arg0, arg1),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kSetBoundaryMethodLifeConstMeta,
+      argValues: [that, boundary],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetBoundaryMethodLifeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_boundary__method__Life",
+        argNames: ["that", "boundary"],
+      );
+
+  DropFnType get dropOpaqueMutexArrayLife =>
+      _platform.inner.drop_opaque_MutexArrayLife;
+  ShareFnType get shareOpaqueMutexArrayLife =>
+      _platform.inner.share_opaque_MutexArrayLife;
+  OpaqueTypeFinalizer get MutexArrayLifeFinalizer =>
+      _platform.MutexArrayLifeFinalizer;
 
   void dispose() {
     _platform.dispose();
   }
 // Section: wire2api
 
-  int _wire2api_SyncReturn_i32(dynamic raw) {
-    final dataView = ByteData.view(raw.buffer);
-    return dataView.getInt32(0);
+  MutexArrayLife _wire2api_MutexArrayLife(dynamic raw) {
+    return MutexArrayLife.fromRaw(raw[0], raw[1], this);
   }
 
-  int _wire2api_i32(dynamic raw) {
-    return raw as int;
+  Life _wire2api_life(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1)
+      throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return Life(
+      bridge: this,
+      field0: _wire2api_MutexArrayLife(arr[0]),
+    );
+  }
+
+  List<Position> _wire2api_list_position(dynamic raw) {
+    return (raw as List<dynamic>).map(_wire2api_position).toList();
+  }
+
+  Position _wire2api_position(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Position(
+      x: _wire2api_usize(arr[0]),
+      y: _wire2api_usize(arr[1]),
+    );
+  }
+
+  void _wire2api_unit(dynamic raw) {
+    return;
+  }
+
+  int _wire2api_usize(dynamic raw) {
+    return castInt(raw);
   }
 }
 
 // Section: api2wire
 
 @protected
+int api2wire_boundary(Boundary raw) {
+  return api2wire_i32(raw.index);
+}
+
+@protected
 int api2wire_i32(int raw) {
+  return raw;
+}
+
+@protected
+int api2wire_u32(int raw) {
+  return raw;
+}
+
+@protected
+int api2wire_usize(int raw) {
   return raw;
 }
 // Section: finalizer
@@ -70,10 +346,81 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
 
 // Section: api2wire
 
+  @protected
+  wire_MutexArrayLife api2wire_MutexArrayLife(MutexArrayLife raw) {
+    final ptr = inner.new_MutexArrayLife();
+    _api_fill_to_wire_MutexArrayLife(raw, ptr);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_Life> api2wire_box_autoadd_life(Life raw) {
+    final ptr = inner.new_box_autoadd_life_0();
+    _api_fill_to_wire_life(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_Shape> api2wire_box_autoadd_shape(Shape raw) {
+    final ptr = inner.new_box_autoadd_shape_0();
+    _api_fill_to_wire_shape(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<ffi.Uint32> api2wire_box_autoadd_u32(int raw) {
+    return inner.new_box_autoadd_u32_0(api2wire_u32(raw));
+  }
+
+  @protected
+  ffi.Pointer<wire_list_position> api2wire_list_position(List<Position> raw) {
+    final ans = inner.new_list_position_0(raw.length);
+    for (var i = 0; i < raw.length; ++i) {
+      _api_fill_to_wire_position(raw[i], ans.ref.ptr[i]);
+    }
+    return ans;
+  }
+
+  @protected
+  ffi.Pointer<ffi.Uint32> api2wire_opt_box_autoadd_u32(int? raw) {
+    return raw == null ? ffi.nullptr : api2wire_box_autoadd_u32(raw);
+  }
+
 // Section: finalizer
 
+  late final OpaqueTypeFinalizer _MutexArrayLifeFinalizer =
+      OpaqueTypeFinalizer(inner._drop_opaque_MutexArrayLifePtr);
+  OpaqueTypeFinalizer get MutexArrayLifeFinalizer => _MutexArrayLifeFinalizer;
 // Section: api_fill_to_wire
 
+  void _api_fill_to_wire_MutexArrayLife(
+      MutexArrayLife apiObj, wire_MutexArrayLife wireObj) {
+    wireObj.ptr = apiObj.shareOrMove();
+  }
+
+  void _api_fill_to_wire_box_autoadd_life(
+      Life apiObj, ffi.Pointer<wire_Life> wireObj) {
+    _api_fill_to_wire_life(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_shape(
+      Shape apiObj, ffi.Pointer<wire_Shape> wireObj) {
+    _api_fill_to_wire_shape(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_life(Life apiObj, wire_Life wireObj) {
+    wireObj.field0 = api2wire_MutexArrayLife(apiObj.field0);
+  }
+
+  void _api_fill_to_wire_position(Position apiObj, wire_Position wireObj) {
+    wireObj.x = api2wire_usize(apiObj.x);
+    wireObj.y = api2wire_usize(apiObj.y);
+  }
+
+  void _api_fill_to_wire_shape(Shape apiObj, wire_Shape wireObj) {
+    wireObj.x = api2wire_usize(apiObj.x);
+    wireObj.y = api2wire_usize(apiObj.y);
+  }
 }
 
 // ignore_for_file: camel_case_types, non_constant_identifier_names, avoid_positional_boolean_parameters, annotate_overrides, constant_identifier_names
@@ -171,19 +518,224 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
   late final _init_frb_dart_api_dl = _init_frb_dart_api_dlPtr
       .asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
-  WireSyncReturnStruct wire_count_plus(
-    int count,
+  void wire_create(
+    int port_,
+    ffi.Pointer<wire_Shape> shape,
+    int boundary,
   ) {
-    return _wire_count_plus(
-      count,
+    return _wire_create(
+      port_,
+      shape,
+      boundary,
     );
   }
 
-  late final _wire_count_plusPtr =
-      _lookup<ffi.NativeFunction<WireSyncReturnStruct Function(ffi.Int32)>>(
-          'wire_count_plus');
-  late final _wire_count_plus =
-      _wire_count_plusPtr.asFunction<WireSyncReturnStruct Function(int)>();
+  late final _wire_createPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Int64, ffi.Pointer<wire_Shape>, ffi.Int32)>>('wire_create');
+  late final _wire_create = _wire_createPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_Shape>, int)>();
+
+  void wire_default_cells(
+    int port_,
+  ) {
+    return _wire_default_cells(
+      port_,
+    );
+  }
+
+  late final _wire_default_cellsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_default_cells');
+  late final _wire_default_cells =
+      _wire_default_cellsPtr.asFunction<void Function(int)>();
+
+  void wire_evolve__method__Life(
+    int port_,
+    ffi.Pointer<wire_Life> that,
+    ffi.Pointer<ffi.Uint32> step,
+  ) {
+    return _wire_evolve__method__Life(
+      port_,
+      that,
+      step,
+    );
+  }
+
+  late final _wire_evolve__method__LifePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Life>,
+              ffi.Pointer<ffi.Uint32>)>>('wire_evolve__method__Life');
+  late final _wire_evolve__method__Life =
+      _wire_evolve__method__LifePtr.asFunction<
+          void Function(
+              int, ffi.Pointer<wire_Life>, ffi.Pointer<ffi.Uint32>)>();
+
+  void wire_clean_cells__method__Life(
+    int port_,
+    ffi.Pointer<wire_Life> that,
+  ) {
+    return _wire_clean_cells__method__Life(
+      port_,
+      that,
+    );
+  }
+
+  late final _wire_clean_cells__method__LifePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_Life>)>>('wire_clean_cells__method__Life');
+  late final _wire_clean_cells__method__Life =
+      _wire_clean_cells__method__LifePtr
+          .asFunction<void Function(int, ffi.Pointer<wire_Life>)>();
+
+  void wire_get_cells__method__Life(
+    int port_,
+    ffi.Pointer<wire_Life> that,
+  ) {
+    return _wire_get_cells__method__Life(
+      port_,
+      that,
+    );
+  }
+
+  late final _wire_get_cells__method__LifePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64,
+              ffi.Pointer<wire_Life>)>>('wire_get_cells__method__Life');
+  late final _wire_get_cells__method__Life = _wire_get_cells__method__LifePtr
+      .asFunction<void Function(int, ffi.Pointer<wire_Life>)>();
+
+  void wire_set_cells__method__Life(
+    int port_,
+    ffi.Pointer<wire_Life> that,
+    ffi.Pointer<wire_list_position> cells,
+  ) {
+    return _wire_set_cells__method__Life(
+      port_,
+      that,
+      cells,
+    );
+  }
+
+  late final _wire_set_cells__method__LifePtr = _lookup<
+          ffi.NativeFunction<
+              ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Life>,
+                  ffi.Pointer<wire_list_position>)>>(
+      'wire_set_cells__method__Life');
+  late final _wire_set_cells__method__Life =
+      _wire_set_cells__method__LifePtr.asFunction<
+          void Function(
+              int, ffi.Pointer<wire_Life>, ffi.Pointer<wire_list_position>)>();
+
+  void wire_set_boundary__method__Life(
+    int port_,
+    ffi.Pointer<wire_Life> that,
+    int boundary,
+  ) {
+    return _wire_set_boundary__method__Life(
+      port_,
+      that,
+      boundary,
+    );
+  }
+
+  late final _wire_set_boundary__method__LifePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Life>,
+              ffi.Int32)>>('wire_set_boundary__method__Life');
+  late final _wire_set_boundary__method__Life =
+      _wire_set_boundary__method__LifePtr
+          .asFunction<void Function(int, ffi.Pointer<wire_Life>, int)>();
+
+  wire_MutexArrayLife new_MutexArrayLife() {
+    return _new_MutexArrayLife();
+  }
+
+  late final _new_MutexArrayLifePtr =
+      _lookup<ffi.NativeFunction<wire_MutexArrayLife Function()>>(
+          'new_MutexArrayLife');
+  late final _new_MutexArrayLife =
+      _new_MutexArrayLifePtr.asFunction<wire_MutexArrayLife Function()>();
+
+  ffi.Pointer<wire_Life> new_box_autoadd_life_0() {
+    return _new_box_autoadd_life_0();
+  }
+
+  late final _new_box_autoadd_life_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_Life> Function()>>(
+          'new_box_autoadd_life_0');
+  late final _new_box_autoadd_life_0 = _new_box_autoadd_life_0Ptr
+      .asFunction<ffi.Pointer<wire_Life> Function()>();
+
+  ffi.Pointer<wire_Shape> new_box_autoadd_shape_0() {
+    return _new_box_autoadd_shape_0();
+  }
+
+  late final _new_box_autoadd_shape_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_Shape> Function()>>(
+          'new_box_autoadd_shape_0');
+  late final _new_box_autoadd_shape_0 = _new_box_autoadd_shape_0Ptr
+      .asFunction<ffi.Pointer<wire_Shape> Function()>();
+
+  ffi.Pointer<ffi.Uint32> new_box_autoadd_u32_0(
+    int value,
+  ) {
+    return _new_box_autoadd_u32_0(
+      value,
+    );
+  }
+
+  late final _new_box_autoadd_u32_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Uint32> Function(ffi.Uint32)>>(
+          'new_box_autoadd_u32_0');
+  late final _new_box_autoadd_u32_0 = _new_box_autoadd_u32_0Ptr
+      .asFunction<ffi.Pointer<ffi.Uint32> Function(int)>();
+
+  ffi.Pointer<wire_list_position> new_list_position_0(
+    int len,
+  ) {
+    return _new_list_position_0(
+      len,
+    );
+  }
+
+  late final _new_list_position_0Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<wire_list_position> Function(
+              ffi.Int32)>>('new_list_position_0');
+  late final _new_list_position_0 = _new_list_position_0Ptr
+      .asFunction<ffi.Pointer<wire_list_position> Function(int)>();
+
+  void drop_opaque_MutexArrayLife(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _drop_opaque_MutexArrayLife(
+      ptr,
+    );
+  }
+
+  late final _drop_opaque_MutexArrayLifePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+          'drop_opaque_MutexArrayLife');
+  late final _drop_opaque_MutexArrayLife = _drop_opaque_MutexArrayLifePtr
+      .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  ffi.Pointer<ffi.Void> share_opaque_MutexArrayLife(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _share_opaque_MutexArrayLife(
+      ptr,
+    );
+  }
+
+  late final _share_opaque_MutexArrayLifePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<ffi.Void> Function(
+              ffi.Pointer<ffi.Void>)>>('share_opaque_MutexArrayLife');
+  late final _share_opaque_MutexArrayLife = _share_opaque_MutexArrayLifePtr
+      .asFunction<ffi.Pointer<ffi.Void> Function(ffi.Pointer<ffi.Void>)>();
 
   void free_WireSyncReturnStruct(
     WireSyncReturnStruct val,
@@ -202,7 +754,39 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
 
 class _Dart_Handle extends ffi.Opaque {}
 
+class wire_Shape extends ffi.Struct {
+  @uintptr_t()
+  external int x;
+
+  @uintptr_t()
+  external int y;
+}
+
+typedef uintptr_t = ffi.UnsignedLong;
+
+class wire_MutexArrayLife extends ffi.Struct {
+  external ffi.Pointer<ffi.Void> ptr;
+}
+
+class wire_Life extends ffi.Struct {
+  external wire_MutexArrayLife field0;
+}
+
+class wire_Position extends ffi.Struct {
+  @uintptr_t()
+  external int x;
+
+  @uintptr_t()
+  external int y;
+}
+
+class wire_list_position extends ffi.Struct {
+  external ffi.Pointer<wire_Position> ptr;
+
+  @ffi.Int32()
+  external int len;
+}
+
 typedef DartPostCObjectFnType = ffi.Pointer<
     ffi.NativeFunction<ffi.Bool Function(DartPort, ffi.Pointer<ffi.Void>)>>;
 typedef DartPort = ffi.Int64;
-typedef uintptr_t = ffi.UnsignedLong;
