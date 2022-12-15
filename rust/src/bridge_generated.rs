@@ -21,16 +21,111 @@ use std::sync::Arc;
 
 // Section: wire functions
 
-fn wire_count_plus_impl(count: impl Wire2Api<i32> + UnwindSafe) -> support::WireSyncReturnStruct {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_sync(
+fn wire_create_impl(
+    port_: MessagePort,
+    shape: impl Wire2Api<Shape> + UnwindSafe,
+    boundary: impl Wire2Api<Boundary> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "count_plus",
-            port: None,
-            mode: FfiCallMode::Sync,
+            debug_name: "create",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
         },
         move || {
-            let api_count = count.wire2api();
-            Ok(count_plus(api_count))
+            let api_shape = shape.wire2api();
+            let api_boundary = boundary.wire2api();
+            move |task_callback| Ok(create(api_shape, api_boundary))
+        },
+    )
+}
+fn wire_default_cells_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "default_cells",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Ok(default_cells()),
+    )
+}
+fn wire_evolve__method__Life_impl(
+    port_: MessagePort,
+    that: impl Wire2Api<Life> + UnwindSafe,
+    step: impl Wire2Api<Option<u32>> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "evolve__method__Life",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_that = that.wire2api();
+            let api_step = step.wire2api();
+            move |task_callback| Ok(Life::evolve(&api_that, api_step))
+        },
+    )
+}
+fn wire_clean_cells__method__Life_impl(port_: MessagePort, that: impl Wire2Api<Life> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "clean_cells__method__Life",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_that = that.wire2api();
+            move |task_callback| Ok(Life::clean_cells(&api_that))
+        },
+    )
+}
+fn wire_get_cells__method__Life_impl(port_: MessagePort, that: impl Wire2Api<Life> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "get_cells__method__Life",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_that = that.wire2api();
+            move |task_callback| Ok(Life::get_cells(&api_that))
+        },
+    )
+}
+fn wire_set_cells__method__Life_impl(
+    port_: MessagePort,
+    that: impl Wire2Api<Life> + UnwindSafe,
+    cells: impl Wire2Api<Vec<Position>> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_cells__method__Life",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_that = that.wire2api();
+            let api_cells = cells.wire2api();
+            move |task_callback| Ok(Life::set_cells(&api_that, api_cells))
+        },
+    )
+}
+fn wire_set_boundary__method__Life_impl(
+    port_: MessagePort,
+    that: impl Wire2Api<Life> + UnwindSafe,
+    boundary: impl Wire2Api<Boundary> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_boundary__method__Life",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_that = that.wire2api();
+            let api_boundary = boundary.wire2api();
+            move |task_callback| Ok(Life::set_boundary(&api_that, api_boundary))
         },
     )
 }
@@ -56,12 +151,54 @@ where
         (!self.is_null()).then(|| self.wire2api())
     }
 }
+
+impl Wire2Api<Boundary> for i32 {
+    fn wire2api(self) -> Boundary {
+        match self {
+            0 => Boundary::Sphere,
+            1 => Boundary::Mirror,
+            2 => Boundary::None,
+            _ => unreachable!("Invalid variant for Boundary: {}", self),
+        }
+    }
+}
+
+impl Wire2Api<u32> for *mut u32 {
+    fn wire2api(self) -> u32 {
+        unsafe { *support::box_from_leak_ptr(self) }
+    }
+}
 impl Wire2Api<i32> for i32 {
     fn wire2api(self) -> i32 {
         self
     }
 }
+
+impl Wire2Api<u32> for u32 {
+    fn wire2api(self) -> u32 {
+        self
+    }
+}
+impl Wire2Api<usize> for usize {
+    fn wire2api(self) -> usize {
+        self
+    }
+}
 // Section: impl IntoDart
+
+impl support::IntoDart for Life {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.0.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for Life {}
+
+impl support::IntoDart for Position {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.x.into_dart(), self.y.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for Position {}
 
 // Section: executor
 

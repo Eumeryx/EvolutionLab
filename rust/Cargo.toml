@@ -8,3 +8,9 @@ crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 flutter_rust_bridge = "1.54.1"
+ndarray = {version = "0.15.6", features = ["rayon"]}
+
+[profile.release]
+#lto = true
+strip = true
+codegen-units = 1
