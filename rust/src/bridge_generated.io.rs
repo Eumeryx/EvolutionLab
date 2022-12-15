@@ -22,6 +22,11 @@ pub extern "C" fn wire_clean_cells__method__Life(port_: i64, that: *mut wire_Lif
 }
 
 #[no_mangle]
+pub extern "C" fn wire_rand__method__Life(port_: i64, that: *mut wire_Life, distr: f64) {
+    wire_rand__method__Life_impl(port_, that, distr)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_get_cells__method__Life(port_: i64, that: *mut wire_Life) {
     wire_get_cells__method__Life_impl(port_, that)
 }

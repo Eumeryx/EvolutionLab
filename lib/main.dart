@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 
 import './life/state.dart';
 import './life/renderer.dart';
+import './ui/button.dart';
+import './ui/utils.dart';
 
 void main() async {
   // 横屏，去状态栏
@@ -16,7 +18,19 @@ void main() async {
   final life = LifeState();
   await life.initState();
 
-  runApp(MaterialApp(home: EvolutionLab(life)));
+  runApp(MaterialApp(
+    home: EvolutionLab(life),
+    theme: ThemeData(
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        elevation: 0,
+        backgroundColor: Colors.blue.withAlpha(150),
+      ),
+      sliderTheme: const SliderThemeData(
+        showValueIndicator: ShowValueIndicator.never,
+        thumbShape: ThumbShape(),
+      ),
+    ),
+  ));
 }
 
 class EvolutionLab extends StatefulWidget {
@@ -34,9 +48,11 @@ class _EvolutionLabState extends State<EvolutionLab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      endDrawer: Drawer(),
       body: Center(
         child: LifeRenderer(life.shape, life.cells),
       ),
+      floatingActionButton: ControllerButton(life),
     );
   }
 }

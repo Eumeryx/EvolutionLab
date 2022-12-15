@@ -80,6 +80,24 @@ fn wire_clean_cells__method__Life_impl(port_: MessagePort, that: impl Wire2Api<L
         },
     )
 }
+fn wire_rand__method__Life_impl(
+    port_: MessagePort,
+    that: impl Wire2Api<Life> + UnwindSafe,
+    distr: impl Wire2Api<f64> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "rand__method__Life",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_that = that.wire2api();
+            let api_distr = distr.wire2api();
+            move |task_callback| Ok(Life::rand(&api_that, api_distr))
+        },
+    )
+}
 fn wire_get_cells__method__Life_impl(port_: MessagePort, that: impl Wire2Api<Life> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -166,6 +184,11 @@ impl Wire2Api<Boundary> for i32 {
 impl Wire2Api<u32> for *mut u32 {
     fn wire2api(self) -> u32 {
         unsafe { *support::box_from_leak_ptr(self) }
+    }
+}
+impl Wire2Api<f64> for f64 {
+    fn wire2api(self) -> f64 {
+        self
     }
 }
 impl Wire2Api<i32> for i32 {

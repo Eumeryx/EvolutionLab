@@ -17,19 +17,52 @@ class LifeState {
 
     _life = await bridge.create(shape: shape.value, boundary: _boundary);
     await _life.setCells(cells: defaultCells);
-
-    _controller.resume();
   }
 
-  var delayed = const Duration(milliseconds: 100);
+  /*
+  * 控制生命演化的方法
+  */
+  var isPaused = true;
+  var _delayed = const Duration(milliseconds: 100);
   late final _controller = _createEvolveStream().listen(null);
 
   Stream<void> _createEvolveStream() async* {
     while (true) {
-      final results = await Future.wait([_life.evolve(), Future.delayed(delayed)]);
-      cells.value = results.first;
+      await Future.wait([_life.evolve(), Future.delayed(_delayed)]);
+      cells.value = await _life.getCells();
 
       yield null;
     }
+  }
+
+  void pause() {
+    if (!isPaused) {
+      _controller.pause();
+      isPaused = _controller.isPaused;
+    }
+  }
+
+  void resume() {
+    _controller.resume();
+    isPaused = _controller.isPaused;
+  }
+
+  void setDelayed(int milliseconds) {
+    _delayed = Duration(milliseconds: milliseconds);
+  }
+
+  void next() async {
+    await _life.evolve();
+    cells.value = await _life.getCells();
+  }
+
+  Future<void> rand(double distr) async {
+    await _life.rand(distr: distr);
+    cells.value = await _life.getCells();
+  }
+
+  void dispose() {
+    _controller.cancel();
+    _life.field0.dispose();
   }
 }

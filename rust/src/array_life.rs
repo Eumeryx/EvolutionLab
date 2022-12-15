@@ -1,4 +1,5 @@
 use ndarray::{azip, s, Array2, ArrayView2, ArrayViewMut2};
+use rand::Rng;
 
 use crate::bridge::{Boundary, LifeAPI, Position, Shape};
 
@@ -98,6 +99,14 @@ impl LifeAPI for ArrayLife {
 
     fn clean_cells(&mut self) {
         self.board.fill(0);
+    }
+
+    fn rand(&mut self, distr: f64) {
+        let mut rng = rand::thread_rng();
+
+        self.inner_cells_mut()
+            .iter_mut()
+            .for_each(|c| *c = (distr > rng.gen()) as u8);
     }
 
     fn get_cells(&self) -> Vec<Position> {

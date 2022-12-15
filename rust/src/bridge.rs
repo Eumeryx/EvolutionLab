@@ -35,6 +35,8 @@ pub trait LifeAPI {
 
     fn clean_cells(&mut self);
 
+    fn rand(&mut self, distr: f64);
+
     fn get_cells(&self) -> Vec<Position>;
 
     fn set_cells(&mut self, cells: Vec<Position>);
@@ -50,19 +52,20 @@ impl Life {
         self.0.lock().unwrap()
     }
 
-    pub fn evolve(&self, step: Option<u32>) -> Vec<Position> {
-        let mut life = self.lock();
-
-        life.evolve(step);
-        life.get_cells()
+    pub fn evolve(&self, step: Option<u32>) {
+        self.lock().evolve(step);
     }
 
     pub fn clean_cells(&self) {
         self.lock().clean_cells();
     }
 
-    pub fn get_cells(&self) {
-        self.lock().get_cells();
+    pub fn rand(&self, distr: f64) {
+        self.lock().rand(distr);
+    }
+
+    pub fn get_cells(&self) -> Vec<Position> {
+        self.lock().get_cells()
     }
 
     pub fn set_cells(&self, cells: Vec<Position>) {

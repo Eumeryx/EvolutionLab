@@ -20,8 +20,7 @@ abstract class Evolution {
 
   FlutterRustBridgeTaskConstMeta get kDefaultCellsConstMeta;
 
-  Future<List<Position>> evolveMethodLife(
-      {required Life that, int? step, dynamic hint});
+  Future<void> evolveMethodLife({required Life that, int? step, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kEvolveMethodLifeConstMeta;
 
@@ -29,7 +28,12 @@ abstract class Evolution {
 
   FlutterRustBridgeTaskConstMeta get kCleanCellsMethodLifeConstMeta;
 
-  Future<void> getCellsMethodLife({required Life that, dynamic hint});
+  Future<void> randMethodLife(
+      {required Life that, required double distr, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kRandMethodLifeConstMeta;
+
+  Future<List<Position>> getCellsMethodLife({required Life that, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kGetCellsMethodLifeConstMeta;
 
@@ -82,8 +86,7 @@ class Life {
     required this.field0,
   });
 
-  Future<List<Position>> evolve({int? step, dynamic hint}) =>
-      bridge.evolveMethodLife(
+  Future<void> evolve({int? step, dynamic hint}) => bridge.evolveMethodLife(
         that: this,
         step: step,
       );
@@ -92,7 +95,13 @@ class Life {
         that: this,
       );
 
-  Future<void> getCells({dynamic hint}) => bridge.getCellsMethodLife(
+  Future<void> rand({required double distr, dynamic hint}) =>
+      bridge.randMethodLife(
+        that: this,
+        distr: distr,
+      );
+
+  Future<List<Position>> getCells({dynamic hint}) => bridge.getCellsMethodLife(
         that: this,
       );
 
@@ -173,14 +182,13 @@ class EvolutionImpl implements Evolution {
         argNames: [],
       );
 
-  Future<List<Position>> evolveMethodLife(
-      {required Life that, int? step, dynamic hint}) {
+  Future<void> evolveMethodLife({required Life that, int? step, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_life(that);
     var arg1 = _platform.api2wire_opt_box_autoadd_u32(step);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_evolve__method__Life(port_, arg0, arg1),
-      parseSuccessData: _wire2api_list_position,
+      parseSuccessData: _wire2api_unit,
       constMeta: kEvolveMethodLifeConstMeta,
       argValues: [that, step],
       hint: hint,
@@ -211,12 +219,33 @@ class EvolutionImpl implements Evolution {
         argNames: ["that"],
       );
 
-  Future<void> getCellsMethodLife({required Life that, dynamic hint}) {
+  Future<void> randMethodLife(
+      {required Life that, required double distr, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_life(that);
+    var arg1 = api2wire_f64(distr);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_rand__method__Life(port_, arg0, arg1),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kRandMethodLifeConstMeta,
+      argValues: [that, distr],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kRandMethodLifeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "rand__method__Life",
+        argNames: ["that", "distr"],
+      );
+
+  Future<List<Position>> getCellsMethodLife(
+      {required Life that, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_life(that);
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) =>
           _platform.inner.wire_get_cells__method__Life(port_, arg0),
-      parseSuccessData: _wire2api_unit,
+      parseSuccessData: _wire2api_list_position,
       constMeta: kGetCellsMethodLifeConstMeta,
       argValues: [that],
       hint: hint,
@@ -323,6 +352,11 @@ class EvolutionImpl implements Evolution {
 @protected
 int api2wire_boundary(Boundary raw) {
   return api2wire_i32(raw.index);
+}
+
+@protected
+double api2wire_f64(double raw) {
+  return raw;
 }
 
 @protected
@@ -589,6 +623,25 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
   late final _wire_clean_cells__method__Life =
       _wire_clean_cells__method__LifePtr
           .asFunction<void Function(int, ffi.Pointer<wire_Life>)>();
+
+  void wire_rand__method__Life(
+    int port_,
+    ffi.Pointer<wire_Life> that,
+    double distr,
+  ) {
+    return _wire_rand__method__Life(
+      port_,
+      that,
+      distr,
+    );
+  }
+
+  late final _wire_rand__method__LifePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Life>,
+              ffi.Double)>>('wire_rand__method__Life');
+  late final _wire_rand__method__Life = _wire_rand__method__LifePtr
+      .asFunction<void Function(int, ffi.Pointer<wire_Life>, double)>();
 
   void wire_get_cells__method__Life(
     int port_,
