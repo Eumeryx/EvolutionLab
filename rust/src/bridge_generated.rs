@@ -181,6 +181,26 @@ fn wire_set_boundary__method__Life_impl(
         },
     )
 }
+fn wire_set_shape__method__Life_impl(
+    port_: MessagePort,
+    that: impl Wire2Api<Life> + UnwindSafe,
+    shape: impl Wire2Api<Shape> + UnwindSafe,
+    clean: impl Wire2Api<Option<bool>> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "set_shape__method__Life",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_that = that.wire2api();
+            let api_shape = shape.wire2api();
+            let api_clean = clean.wire2api();
+            move |task_callback| Ok(Life::set_shape(&api_that, api_shape, api_clean))
+        },
+    )
+}
 // Section: wrapper structs
 
 // Section: static checks
@@ -204,6 +224,11 @@ where
     }
 }
 
+impl Wire2Api<bool> for bool {
+    fn wire2api(self) -> bool {
+        self
+    }
+}
 impl Wire2Api<Boundary> for i32 {
     fn wire2api(self) -> Boundary {
         match self {
@@ -212,6 +237,11 @@ impl Wire2Api<Boundary> for i32 {
             2 => Boundary::None,
             _ => unreachable!("Invalid variant for Boundary: {}", self),
         }
+    }
+}
+impl Wire2Api<bool> for *mut bool {
+    fn wire2api(self) -> bool {
+        unsafe { *support::box_from_leak_ptr(self) }
     }
 }
 

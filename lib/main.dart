@@ -1,3 +1,4 @@
+import 'package:evolution_lab/ui/drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -48,7 +49,7 @@ class _EvolutionLabState extends State<EvolutionLab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      endDrawer: Drawer(),
+      endDrawer: Drawer(child: EndDrawer(life)),
       body: Center(
         child: LifeRenderer(life.shape, life.cells),
       ),

@@ -16,9 +16,18 @@ abstract class Evolution {
 
   FlutterRustBridgeTaskConstMeta get kCreateConstMeta;
 
-  Future<List<Position>> defaultCells({dynamic hint});
+  Future<Pattern> decodeRle({required String rle, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kDefaultCellsConstMeta;
+  FlutterRustBridgeTaskConstMeta get kDecodeRleConstMeta;
+
+  Future<String> encodeRle(
+      {required Header header, required List<Position> cells, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kEncodeRleConstMeta;
+
+  Future<Pattern> defaultPattern({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kDefaultPatternConstMeta;
 
   Future<void> evolveMethodLife({required Life that, int? step, dynamic hint});
 
@@ -46,6 +55,11 @@ abstract class Evolution {
       {required Life that, required Boundary boundary, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kSetBoundaryMethodLifeConstMeta;
+
+  Future<void> setShapeMethodLife(
+      {required Life that, required Shape shape, bool? clean, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kSetShapeMethodLifeConstMeta;
 
   DropFnType get dropOpaqueMutexArrayLife;
   ShareFnType get shareOpaqueMutexArrayLife;
@@ -75,6 +89,24 @@ enum Boundary {
   Sphere,
   Mirror,
   None,
+}
+
+class Header {
+  final String? name;
+  final String? owner;
+  final String? comment;
+  final String? rule;
+  final int x;
+  final int y;
+
+  Header({
+    this.name,
+    this.owner,
+    this.comment,
+    this.rule,
+    required this.x,
+    required this.y,
+  });
 }
 
 class Life {
@@ -116,6 +148,23 @@ class Life {
         that: this,
         boundary: boundary,
       );
+
+  Future<void> setShape({required Shape shape, bool? clean, dynamic hint}) =>
+      bridge.setShapeMethodLife(
+        that: this,
+        shape: shape,
+        clean: clean,
+      );
+}
+
+class Pattern {
+  final Header header;
+  final List<Position> cells;
+
+  Pattern({
+    required this.header,
+    required this.cells,
+  });
 }
 
 class Position {
@@ -166,19 +215,55 @@ class EvolutionImpl implements Evolution {
         argNames: ["shape", "boundary"],
       );
 
-  Future<List<Position>> defaultCells({dynamic hint}) {
+  Future<Pattern> decodeRle({required String rle, dynamic hint}) {
+    var arg0 = _platform.api2wire_String(rle);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_default_cells(port_),
-      parseSuccessData: _wire2api_list_position,
-      constMeta: kDefaultCellsConstMeta,
+      callFfi: (port_) => _platform.inner.wire_decode_rle(port_, arg0),
+      parseSuccessData: _wire2api_pattern,
+      constMeta: kDecodeRleConstMeta,
+      argValues: [rle],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kDecodeRleConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "decode_rle",
+        argNames: ["rle"],
+      );
+
+  Future<String> encodeRle(
+      {required Header header, required List<Position> cells, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_header(header);
+    var arg1 = _platform.api2wire_list_position(cells);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_encode_rle(port_, arg0, arg1),
+      parseSuccessData: _wire2api_String,
+      constMeta: kEncodeRleConstMeta,
+      argValues: [header, cells],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kEncodeRleConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "encode_rle",
+        argNames: ["header", "cells"],
+      );
+
+  Future<Pattern> defaultPattern({dynamic hint}) {
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_default_pattern(port_),
+      parseSuccessData: _wire2api_pattern,
+      constMeta: kDefaultPatternConstMeta,
       argValues: [],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kDefaultCellsConstMeta =>
+  FlutterRustBridgeTaskConstMeta get kDefaultPatternConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
-        debugName: "default_cells",
+        debugName: "default_pattern",
         argNames: [],
       );
 
@@ -298,6 +383,27 @@ class EvolutionImpl implements Evolution {
         argNames: ["that", "boundary"],
       );
 
+  Future<void> setShapeMethodLife(
+      {required Life that, required Shape shape, bool? clean, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_life(that);
+    var arg1 = _platform.api2wire_box_autoadd_shape(shape);
+    var arg2 = _platform.api2wire_opt_box_autoadd_bool(clean);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) =>
+          _platform.inner.wire_set_shape__method__Life(port_, arg0, arg1, arg2),
+      parseSuccessData: _wire2api_unit,
+      constMeta: kSetShapeMethodLifeConstMeta,
+      argValues: [that, shape, clean],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kSetShapeMethodLifeConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "set_shape__method__Life",
+        argNames: ["that", "shape", "clean"],
+      );
+
   DropFnType get dropOpaqueMutexArrayLife =>
       _platform.inner.drop_opaque_MutexArrayLife;
   ShareFnType get shareOpaqueMutexArrayLife =>
@@ -314,6 +420,24 @@ class EvolutionImpl implements Evolution {
     return MutexArrayLife.fromRaw(raw[0], raw[1], this);
   }
 
+  String _wire2api_String(dynamic raw) {
+    return raw as String;
+  }
+
+  Header _wire2api_header(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return Header(
+      name: _wire2api_opt_String(arr[0]),
+      owner: _wire2api_opt_String(arr[1]),
+      comment: _wire2api_opt_String(arr[2]),
+      rule: _wire2api_opt_String(arr[3]),
+      x: _wire2api_usize(arr[4]),
+      y: _wire2api_usize(arr[5]),
+    );
+  }
+
   Life _wire2api_life(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 1)
@@ -328,6 +452,20 @@ class EvolutionImpl implements Evolution {
     return (raw as List<dynamic>).map(_wire2api_position).toList();
   }
 
+  String? _wire2api_opt_String(dynamic raw) {
+    return raw == null ? null : _wire2api_String(raw);
+  }
+
+  Pattern _wire2api_pattern(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Pattern(
+      header: _wire2api_header(arr[0]),
+      cells: _wire2api_list_position(arr[1]),
+    );
+  }
+
   Position _wire2api_position(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 2)
@@ -336,6 +474,14 @@ class EvolutionImpl implements Evolution {
       x: _wire2api_usize(arr[0]),
       y: _wire2api_usize(arr[1]),
     );
+  }
+
+  int _wire2api_u8(dynamic raw) {
+    return raw as int;
+  }
+
+  Uint8List _wire2api_uint_8_list(dynamic raw) {
+    return raw as Uint8List;
   }
 
   void _wire2api_unit(dynamic raw) {
@@ -348,6 +494,11 @@ class EvolutionImpl implements Evolution {
 }
 
 // Section: api2wire
+
+@protected
+bool api2wire_bool(bool raw) {
+  return raw;
+}
 
 @protected
 int api2wire_boundary(Boundary raw) {
@@ -370,6 +521,11 @@ int api2wire_u32(int raw) {
 }
 
 @protected
+int api2wire_u8(int raw) {
+  return raw;
+}
+
+@protected
 int api2wire_usize(int raw) {
   return raw;
 }
@@ -384,6 +540,23 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
   wire_MutexArrayLife api2wire_MutexArrayLife(MutexArrayLife raw) {
     final ptr = inner.new_MutexArrayLife();
     _api_fill_to_wire_MutexArrayLife(raw, ptr);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_uint_8_list> api2wire_String(String raw) {
+    return api2wire_uint_8_list(utf8.encoder.convert(raw));
+  }
+
+  @protected
+  ffi.Pointer<ffi.Bool> api2wire_box_autoadd_bool(bool raw) {
+    return inner.new_box_autoadd_bool_0(api2wire_bool(raw));
+  }
+
+  @protected
+  ffi.Pointer<wire_Header> api2wire_box_autoadd_header(Header raw) {
+    final ptr = inner.new_box_autoadd_header_0();
+    _api_fill_to_wire_header(raw, ptr.ref);
     return ptr;
   }
 
@@ -416,8 +589,25 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
   }
 
   @protected
+  ffi.Pointer<wire_uint_8_list> api2wire_opt_String(String? raw) {
+    return raw == null ? ffi.nullptr : api2wire_String(raw);
+  }
+
+  @protected
+  ffi.Pointer<ffi.Bool> api2wire_opt_box_autoadd_bool(bool? raw) {
+    return raw == null ? ffi.nullptr : api2wire_box_autoadd_bool(raw);
+  }
+
+  @protected
   ffi.Pointer<ffi.Uint32> api2wire_opt_box_autoadd_u32(int? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_u32(raw);
+  }
+
+  @protected
+  ffi.Pointer<wire_uint_8_list> api2wire_uint_8_list(Uint8List raw) {
+    final ans = inner.new_uint_8_list_0(raw.length);
+    ans.ref.ptr.asTypedList(raw.length).setAll(0, raw);
+    return ans;
   }
 
 // Section: finalizer
@@ -432,6 +622,11 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
     wireObj.ptr = apiObj.shareOrMove();
   }
 
+  void _api_fill_to_wire_box_autoadd_header(
+      Header apiObj, ffi.Pointer<wire_Header> wireObj) {
+    _api_fill_to_wire_header(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_life(
       Life apiObj, ffi.Pointer<wire_Life> wireObj) {
     _api_fill_to_wire_life(apiObj, wireObj.ref);
@@ -440,6 +635,15 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
   void _api_fill_to_wire_box_autoadd_shape(
       Shape apiObj, ffi.Pointer<wire_Shape> wireObj) {
     _api_fill_to_wire_shape(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_header(Header apiObj, wire_Header wireObj) {
+    wireObj.name = api2wire_opt_String(apiObj.name);
+    wireObj.owner = api2wire_opt_String(apiObj.owner);
+    wireObj.comment = api2wire_opt_String(apiObj.comment);
+    wireObj.rule = api2wire_opt_String(apiObj.rule);
+    wireObj.x = api2wire_usize(apiObj.x);
+    wireObj.y = api2wire_usize(apiObj.y);
   }
 
   void _api_fill_to_wire_life(Life apiObj, wire_Life wireObj) {
@@ -571,19 +775,56 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
   late final _wire_create = _wire_createPtr
       .asFunction<void Function(int, ffi.Pointer<wire_Shape>, int)>();
 
-  void wire_default_cells(
+  void wire_decode_rle(
+    int port_,
+    ffi.Pointer<wire_uint_8_list> rle,
+  ) {
+    return _wire_decode_rle(
+      port_,
+      rle,
+    );
+  }
+
+  late final _wire_decode_rlePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>('wire_decode_rle');
+  late final _wire_decode_rle = _wire_decode_rlePtr
+      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_encode_rle(
+    int port_,
+    ffi.Pointer<wire_Header> header,
+    ffi.Pointer<wire_list_position> cells,
+  ) {
+    return _wire_encode_rle(
+      port_,
+      header,
+      cells,
+    );
+  }
+
+  late final _wire_encode_rlePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Header>,
+              ffi.Pointer<wire_list_position>)>>('wire_encode_rle');
+  late final _wire_encode_rle = _wire_encode_rlePtr.asFunction<
+      void Function(
+          int, ffi.Pointer<wire_Header>, ffi.Pointer<wire_list_position>)>();
+
+  void wire_default_pattern(
     int port_,
   ) {
-    return _wire_default_cells(
+    return _wire_default_pattern(
       port_,
     );
   }
 
-  late final _wire_default_cellsPtr =
+  late final _wire_default_patternPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
-          'wire_default_cells');
-  late final _wire_default_cells =
-      _wire_default_cellsPtr.asFunction<void Function(int)>();
+          'wire_default_pattern');
+  late final _wire_default_pattern =
+      _wire_default_patternPtr.asFunction<void Function(int)>();
 
   void wire_evolve__method__Life(
     int port_,
@@ -702,6 +943,32 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
       _wire_set_boundary__method__LifePtr
           .asFunction<void Function(int, ffi.Pointer<wire_Life>, int)>();
 
+  void wire_set_shape__method__Life(
+    int port_,
+    ffi.Pointer<wire_Life> that,
+    ffi.Pointer<wire_Shape> shape,
+    ffi.Pointer<ffi.Bool> clean,
+  ) {
+    return _wire_set_shape__method__Life(
+      port_,
+      that,
+      shape,
+      clean,
+    );
+  }
+
+  late final _wire_set_shape__method__LifePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Int64,
+              ffi.Pointer<wire_Life>,
+              ffi.Pointer<wire_Shape>,
+              ffi.Pointer<ffi.Bool>)>>('wire_set_shape__method__Life');
+  late final _wire_set_shape__method__Life =
+      _wire_set_shape__method__LifePtr.asFunction<
+          void Function(int, ffi.Pointer<wire_Life>, ffi.Pointer<wire_Shape>,
+              ffi.Pointer<ffi.Bool>)>();
+
   wire_MutexArrayLife new_MutexArrayLife() {
     return _new_MutexArrayLife();
   }
@@ -711,6 +978,30 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
           'new_MutexArrayLife');
   late final _new_MutexArrayLife =
       _new_MutexArrayLifePtr.asFunction<wire_MutexArrayLife Function()>();
+
+  ffi.Pointer<ffi.Bool> new_box_autoadd_bool_0(
+    bool value,
+  ) {
+    return _new_box_autoadd_bool_0(
+      value,
+    );
+  }
+
+  late final _new_box_autoadd_bool_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Bool> Function(ffi.Bool)>>(
+          'new_box_autoadd_bool_0');
+  late final _new_box_autoadd_bool_0 = _new_box_autoadd_bool_0Ptr
+      .asFunction<ffi.Pointer<ffi.Bool> Function(bool)>();
+
+  ffi.Pointer<wire_Header> new_box_autoadd_header_0() {
+    return _new_box_autoadd_header_0();
+  }
+
+  late final _new_box_autoadd_header_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_Header> Function()>>(
+          'new_box_autoadd_header_0');
+  late final _new_box_autoadd_header_0 = _new_box_autoadd_header_0Ptr
+      .asFunction<ffi.Pointer<wire_Header> Function()>();
 
   ffi.Pointer<wire_Life> new_box_autoadd_life_0() {
     return _new_box_autoadd_life_0();
@@ -760,6 +1051,21 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
               ffi.Int32)>>('new_list_position_0');
   late final _new_list_position_0 = _new_list_position_0Ptr
       .asFunction<ffi.Pointer<wire_list_position> Function(int)>();
+
+  ffi.Pointer<wire_uint_8_list> new_uint_8_list_0(
+    int len,
+  ) {
+    return _new_uint_8_list_0(
+      len,
+    );
+  }
+
+  late final _new_uint_8_list_0Ptr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<wire_uint_8_list> Function(
+              ffi.Int32)>>('new_uint_8_list_0');
+  late final _new_uint_8_list_0 = _new_uint_8_list_0Ptr
+      .asFunction<ffi.Pointer<wire_uint_8_list> Function(int)>();
 
   void drop_opaque_MutexArrayLife(
     ffi.Pointer<ffi.Void> ptr,
@@ -817,12 +1123,27 @@ class wire_Shape extends ffi.Struct {
 
 typedef uintptr_t = ffi.UnsignedLong;
 
-class wire_MutexArrayLife extends ffi.Struct {
-  external ffi.Pointer<ffi.Void> ptr;
+class wire_uint_8_list extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint8> ptr;
+
+  @ffi.Int32()
+  external int len;
 }
 
-class wire_Life extends ffi.Struct {
-  external wire_MutexArrayLife field0;
+class wire_Header extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> name;
+
+  external ffi.Pointer<wire_uint_8_list> owner;
+
+  external ffi.Pointer<wire_uint_8_list> comment;
+
+  external ffi.Pointer<wire_uint_8_list> rule;
+
+  @uintptr_t()
+  external int x;
+
+  @uintptr_t()
+  external int y;
 }
 
 class wire_Position extends ffi.Struct {
@@ -838,6 +1159,14 @@ class wire_list_position extends ffi.Struct {
 
   @ffi.Int32()
   external int len;
+}
+
+class wire_MutexArrayLife extends ffi.Struct {
+  external ffi.Pointer<ffi.Void> ptr;
+}
+
+class wire_Life extends ffi.Struct {
+  external wire_MutexArrayLife field0;
 }
 
 typedef DartPostCObjectFnType = ffi.Pointer<

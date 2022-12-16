@@ -12,11 +12,11 @@ class LifeState {
   Boundary get boundary => _boundary;
 
   Future<void> initState() async {
-    final defaultCells = await bridge.defaultCells();
-    cells.value = defaultCells;
+    final defaultPattern = await bridge.defaultPattern();
+    cells.value = defaultPattern.cells;
 
     _life = await bridge.create(shape: shape.value, boundary: _boundary);
-    await _life.setCells(cells: defaultCells);
+    await _life.setCells(cells: defaultPattern.cells);
   }
 
   /*
@@ -59,6 +59,18 @@ class LifeState {
   Future<void> rand(double distr) async {
     await _life.rand(distr: distr);
     cells.value = await _life.getCells();
+  }
+
+  Future<void> setShape(Shape newShape, {bool? clean}) async {
+    await _life.setShape(shape: newShape, clean: clean);
+
+    if (clean == true) {
+      cells.value = [];
+    } else {
+      cells.value = await _life.getCells();
+    }
+
+    shape.value = newShape;
   }
 
   void dispose() {

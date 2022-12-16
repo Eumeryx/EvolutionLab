@@ -59,11 +59,26 @@ pub extern "C" fn wire_set_boundary__method__Life(port_: i64, that: *mut wire_Li
     wire_set_boundary__method__Life_impl(port_, that, boundary)
 }
 
+#[no_mangle]
+pub extern "C" fn wire_set_shape__method__Life(
+    port_: i64,
+    that: *mut wire_Life,
+    shape: *mut wire_Shape,
+    clean: *mut bool,
+) {
+    wire_set_shape__method__Life_impl(port_, that, shape, clean)
+}
+
 // Section: allocate functions
 
 #[no_mangle]
 pub extern "C" fn new_MutexArrayLife() -> wire_MutexArrayLife {
     wire_MutexArrayLife::new_with_null_ptr()
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_bool_0(value: bool) -> *mut bool {
+    support::new_leak_box_ptr(value)
 }
 
 #[no_mangle]

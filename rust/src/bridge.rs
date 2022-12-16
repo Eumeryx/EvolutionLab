@@ -44,6 +44,8 @@ pub trait LifeAPI {
     fn set_cells(&mut self, cells: Vec<Position>);
 
     fn set_boundary(&mut self, boundary: Boundary);
+
+    fn set_shape(&mut self, shape: Shape, clean: Option<bool>);
 }
 
 // flutter_rust_bridge 要求 &self，使用 Mutex 修改内部结构
@@ -76,6 +78,10 @@ impl Life {
 
     pub fn set_boundary(&self, boundary: Boundary) {
         self.lock().set_boundary(boundary);
+    }
+
+    pub fn set_shape(&self, shape: Shape, clean: Option<bool>) {
+        self.lock().set_shape(shape, clean);
     }
 }
 

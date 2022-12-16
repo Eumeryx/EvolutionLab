@@ -12,17 +12,20 @@ class LifeRenderer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final canvasSize = shape.value.getCanvasSize(screenSize);
 
-    return RepaintBoundary(
-      child: CustomPaint(
-        size: canvasSize,
-        painter: _CellPainter(cells, canvasSize.height / shape.value.y),
-        child: RepaintBoundary(
-          child: CustomPaint(size: canvasSize, painter: _GridPainter(shape.value)),
-        ),
-      ),
-    );
+    return ValueListenableBuilder(
+        valueListenable: shape,
+        builder: (context, value, _) {
+          final canvasSize = value.getCanvasSize(screenSize);
+
+          return CustomPaint(
+            size: canvasSize,
+            painter: _CellPainter(cells, canvasSize.height / value.y),
+            child: RepaintBoundary(
+              child: CustomPaint(size: canvasSize, painter: _GridPainter(value)),
+            ),
+          );
+        });
   }
 }
 
@@ -76,5 +79,5 @@ class _GridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_) => false;
+  bool shouldRepaint(_) => true;
 }

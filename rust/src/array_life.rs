@@ -146,4 +146,19 @@ impl LifeAPI for ArrayLife {
 
         self.boundary = boundary;
     }
+
+    fn set_shape(&mut self, shape: Shape, clean: Option<bool>) {
+        let (n, m) = (shape.x + 2, shape.y + 2);
+        let mut new = Array2::<u8>::zeros((n, m));
+
+        if clean == Some(false) {
+            let old = &self.board;
+            let n = n.min(old.nrows());
+            let m = m.min(old.ncols());
+
+            new.slice_mut(s![..n, ..m]).assign(&old.slice(s![..n, ..m]));
+        }
+
+        self.board = new;
+    }
 }
