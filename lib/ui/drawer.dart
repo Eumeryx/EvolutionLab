@@ -37,7 +37,42 @@ class EndDrawer extends StatelessWidget {
               Navigator.pop(context);
             }
           },
-        )
+        ),
+        SetBoundary(life),
+      ],
+    );
+  }
+}
+
+class SetBoundary extends StatelessWidget {
+  SetBoundary(this.life, {super.key});
+
+  final LifeState life;
+
+  final items = [Boundary.Sphere.name, Boundary.Mirror.name, Boundary.None.name]
+      .map((n) => DropdownMenuItem(value: n, child: Text(n)))
+      .toList();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Text('边界条件:', textAlign: TextAlign.center, textScaleFactor: 1.1)),
+        Expanded(
+          child: DropdownButtonHideUnderline(
+            child: StatefulBuilder(
+              builder: (context, setState) => DropdownButton(
+                items: items,
+                isExpanded: true,
+                value: life.boundary.name,
+                onChanged: (String? value) async {
+                  await life.setBoundary(life.boundary.fromName(value));
+                  setState(() {});
+                },
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

@@ -83,6 +83,11 @@ class LifeState {
 
   Future<void> cleanCells() => _life.cleanCells();
 
+  Future<void> setBoundary(Boundary boundary) async {
+    _life.setBoundary(boundary: boundary);
+    _boundary = boundary;
+  }
+
   void dispose() {
     _controller.cancel();
     _life.field0.dispose();

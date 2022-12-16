@@ -70,3 +70,13 @@ extension ImplPattern on Pattern {
     );
   }
 }
+
+extension ImplBoundary on Boundary {
+  Boundary fromName(String? name) =>
+      {
+        Boundary.None.name: Boundary.None,
+        Boundary.Sphere.name: Boundary.Sphere,
+        Boundary.Mirror.name: Boundary.Mirror,
+      }[name] ??
+      this;
+}
