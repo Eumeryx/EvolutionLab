@@ -19,6 +19,9 @@ use std::sync::Arc;
 
 // Section: imports
 
+use crate::pattern::Header;
+use crate::pattern::Pattern;
+
 // Section: wire functions
 
 fn wire_create_impl(
@@ -39,14 +42,45 @@ fn wire_create_impl(
         },
     )
 }
-fn wire_default_cells_impl(port_: MessagePort) {
+fn wire_decode_rle_impl(port_: MessagePort, rle: impl Wire2Api<String> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
-            debug_name: "default_cells",
+            debug_name: "decode_rle",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
-        move || move |task_callback| Ok(default_cells()),
+        move || {
+            let api_rle = rle.wire2api();
+            move |task_callback| decode_rle(api_rle)
+        },
+    )
+}
+fn wire_encode_rle_impl(
+    port_: MessagePort,
+    header: impl Wire2Api<Header> + UnwindSafe,
+    cells: impl Wire2Api<Vec<Position>> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "encode_rle",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_header = header.wire2api();
+            let api_cells = cells.wire2api();
+            move |task_callback| Ok(encode_rle(api_header, api_cells))
+        },
+    )
+}
+fn wire_default_pattern_impl(port_: MessagePort) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "default_pattern",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Ok(default_pattern()),
     )
 }
 fn wire_evolve__method__Life_impl(
@@ -191,6 +225,7 @@ impl Wire2Api<f64> for f64 {
         self
     }
 }
+
 impl Wire2Api<i32> for i32 {
     fn wire2api(self) -> i32 {
         self
@@ -202,6 +237,12 @@ impl Wire2Api<u32> for u32 {
         self
     }
 }
+impl Wire2Api<u8> for u8 {
+    fn wire2api(self) -> u8 {
+        self
+    }
+}
+
 impl Wire2Api<usize> for usize {
     fn wire2api(self) -> usize {
         self
@@ -209,12 +250,34 @@ impl Wire2Api<usize> for usize {
 }
 // Section: impl IntoDart
 
+impl support::IntoDart for Header {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.name.into_dart(),
+            self.owner.into_dart(),
+            self.comment.into_dart(),
+            self.rule.into_dart(),
+            self.x.into_dart(),
+            self.y.into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for Header {}
+
 impl support::IntoDart for Life {
     fn into_dart(self) -> support::DartAbi {
         vec![self.0.into_dart()].into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for Life {}
+
+impl support::IntoDart for Pattern {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.header.into_dart(), self.cells.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for Pattern {}
 
 impl support::IntoDart for Position {
     fn into_dart(self) -> support::DartAbi {

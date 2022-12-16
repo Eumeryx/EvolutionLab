@@ -1,9 +1,11 @@
 pub use std::sync::Mutex;
 use std::sync::MutexGuard;
 
+use anyhow::Result;
 use flutter_rust_bridge::RustOpaque;
 
 pub use crate::array_life::ArrayLife;
+pub use crate::pattern::{Header, Pattern};
 
 /// 边界条件
 /// Sphere 循环;
@@ -83,6 +85,14 @@ pub fn create(shape: Shape, boundary: Boundary) -> Life {
     Life(RustOpaque::new(Mutex::new(array_life)))
 }
 
-pub fn default_cells() -> Vec<Position> {
-    include!("gospers_glider_gun.txt")
+pub fn decode_rle(rle: String) -> Result<Pattern> {
+    Pattern::decode_rle(&rle[..])
+}
+
+pub fn encode_rle(header: Header, cells: Vec<Position>) -> String {
+    Pattern { header, cells }.encode_rle()
+}
+
+pub fn default_pattern() -> Pattern {
+    include!("pattern/gospers_glider_gun_synth.txt")
 }
