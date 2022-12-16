@@ -11,7 +11,10 @@ extension ImplShape on Shape {
     return Size(x * cellWidth, y * cellWidth);
   }
 
-  bool include(Shape shape) => x > shape.x && y > shape.y;
+  bool include(Shape shape) => x >= shape.x && y >= shape.y;
+
+  Position getCenterOffset(Shape targetShape) =>
+      Position(x: (targetShape.x - x) ~/ 2, y: (targetShape.y - y) ~/ 2);
 }
 
 extension ImplPosition on Position {
@@ -19,6 +22,8 @@ extension ImplPosition on Position {
 }
 
 extension ImplHeader on Header {
+  Shape getShape() => Shape(x: x, y: y);
+
   Widget toWidget({BuildContext? context}) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,4 +53,20 @@ extension ImplHeader on Header {
           ),
         ],
       );
+}
+
+extension ImplPattern on Pattern {
+  Pattern applyOffset(Position offset) {
+    return Pattern(
+      header: Header(
+        name: header.name,
+        owner: header.owner,
+        comment: header.comment,
+        rule: header.rule,
+        x: header.x + offset.x,
+        y: header.y + offset.y,
+      ),
+      cells: cells.map((e) => Position(x: e.x + offset.x, y: e.y + offset.y)).toList(),
+    );
+  }
 }

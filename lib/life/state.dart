@@ -51,6 +51,9 @@ class LifeState {
     _delayed = Duration(milliseconds: milliseconds);
   }
 
+  /*
+  * 重新包装的 Rust 端 API
+  */
   void next() async {
     await _life.evolve();
     cells.value = await _life.getCells();
@@ -72,6 +75,13 @@ class LifeState {
 
     shape.value = newShape;
   }
+
+  Future<void> setCells(List<Position> newCells) async {
+    await _life.setCells(cells: newCells);
+    cells.value = newCells;
+  }
+
+  Future<void> cleanCells() => _life.cleanCells();
 
   void dispose() {
     _controller.cancel();

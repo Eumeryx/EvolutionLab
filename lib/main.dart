@@ -54,6 +54,7 @@ class _EvolutionLabState extends State<EvolutionLab> {
         child: LifeRenderer(life.shape, life.cells),
       ),
       floatingActionButton: ControllerButton(life),
+      resizeToAvoidBottomInset: false,
     );
   }
 }

@@ -1,7 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../life/state.dart';
 import '../bridge/bridge.dart';
@@ -48,84 +52,188 @@ class _ResetShapeDialogState extends State<ResetShapeDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(flex: 2, child: Text('大小', textAlign: TextAlign.start)),
-              Expanded(
-                child: TextField(
-                  autofocus: true,
-                  controller: widthCtrl,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (v) {
-                    if (fullScreen) {
-                      final width = int.tryParse(v) ?? 0;
-                      final height = size.height ~/ (size.width / width);
-                      heightCtrl.text = height.toString();
-                    }
-                  },
-                ),
-              ),
-              const Expanded(child: Text('x', textAlign: TextAlign.center)),
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: heightCtrl,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (v) {
-                    if (fullScreen) {
-                      final height = int.tryParse(v) ?? 0;
-                      final width = size.width ~/ (size.height / height);
-                      widthCtrl.text = width.toString();
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('清除细胞'),
-              Switch(
-                value: cleanCell,
-                onChanged: (i) => setState(() => cleanCell = i),
-              ),
-              const Text('占满屏幕'),
-              Switch(
-                value: fullScreen,
-                onChanged: (i) => setState(() => fullScreen = i),
-              ),
-            ],
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-            child: const Text('确认'),
-            onPressed: () async {
-              final shape = Shape(x: int.parse(widthCtrl.text), y: int.parse(heightCtrl.text));
-
-              if (moreTarget && !shape.include(targetShape)) {
-                showDialog(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    content: SelectableText('网格必需大于 ${targetShape.x}x${targetShape.y}!'),
+      // 套一层 SingleChildScrollView 防止弹出键盘时遮盖输入框
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(flex: 2, child: Text('大小', textAlign: TextAlign.start)),
+                Expanded(
+                  child: TextField(
+                    autofocus: true,
+                    controller: widthCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (v) {
+                      if (fullScreen) {
+                        final width = int.tryParse(v) ?? 0;
+                        final height = size.height ~/ (size.width / width);
+                        heightCtrl.text = height.toString();
+                      }
+                    },
                   ),
-                );
-              } else {
-                await life.setShape(shape, clean: cleanCell);
-                Navigator.pop(context);
-              }
-            })
-      ],
+                ),
+                const Expanded(child: Text('x', textAlign: TextAlign.center)),
+                Expanded(
+                  child: TextField(
+                    controller: heightCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    onChanged: (v) {
+                      if (fullScreen) {
+                        final height = int.tryParse(v) ?? 0;
+                        final width = size.width ~/ (size.height / height);
+                        widthCtrl.text = width.toString();
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('清除细胞'),
+                Switch(
+                  value: cleanCell,
+                  onChanged: (i) => setState(() => cleanCell = i),
+                ),
+                const Text('占满屏幕'),
+                Switch(
+                  value: fullScreen,
+                  onChanged: (i) => setState(() => fullScreen = i),
+                ),
+              ],
+            ),
+            TextButton(
+                child: const Text('确认'),
+                onPressed: () async {
+                  final shape = Shape(
+                    x: int.tryParse(widthCtrl.text) ?? 0,
+                    y: int.tryParse(heightCtrl.text) ?? 0,
+                  );
+
+                  if (moreTarget && !shape.include(targetShape)) {
+                    await showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        content: SelectableText('网格必需大于 ${targetShape.x}x${targetShape.y}!'),
+                      ),
+                    );
+                  } else {
+                    await life.setShape(shape, clean: cleanCell);
+                    Navigator.pop(context);
+                  }
+                })
+          ],
+        ),
+      ),
     );
   }
+}
+
+Future<Pattern?> openRleFile(BuildContext context, LifeState life) async {
+  const title = '请选择一个 RLE 文件';
+  Pattern? pattern;
+  FilePickerResult? filePicker;
+
+  if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+    filePicker = await FilePicker.platform.pickFiles(
+      dialogTitle: title,
+      type: FileType.custom,
+      allowedExtensions: ['rle'],
+    );
+  } else {
+    // 移动端不支持 rle 扩展名
+    filePicker = await FilePicker.platform.pickFiles(dialogTitle: title, type: FileType.any);
+  }
+
+  final path = filePicker?.files.single.path;
+  if (path == null) return pattern;
+
+  try {
+    final str = await File(path).readAsString();
+    var rle = await bridge.decodeRle(rle: str);
+
+    var center = true;
+    var cleanCell = true;
+    final shape = rle.header.getShape();
+    final moreShape = !life.shape.value.include(shape);
+
+    pattern = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('RLE 信息'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            rle.header.toWidget(context: context),
+            StatefulBuilder(
+              builder: (context, setState) => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('清除网格'),
+                  Switch(
+                    value: cleanCell,
+                    onChanged: (i) => setState(() => cleanCell = i),
+                  ),
+                  const Text('居中'),
+                  Switch(
+                    value: center,
+                    onChanged: (i) => setState(() => center = i),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text(moreShape ? '尺寸过大，点此扩大网格' : '确认'),
+            onPressed: () async {
+              if (moreShape) {
+                await showDialog(
+                  context: context,
+                  builder: (context) => ResetShapeDialog(
+                    life,
+                    targetShape: shape,
+                    clean: false,
+                    title: '调整网格大小',
+                    moreTarget: true,
+                  ),
+                );
+              }
+
+              if (life.shape.value.include(shape)) {
+                if (center) {
+                  final offset = shape.getCenterOffset(life.shape.value);
+                  rle = rle.applyOffset(offset);
+                }
+
+                if (cleanCell) await life.cleanCells();
+
+                Navigator.of(context).pop(rle);
+              }
+            },
+          )
+        ],
+      ),
+    );
+  } catch (e) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('打开文件失败！'),
+        content: Text(e.toString()),
+      ),
+    );
+  }
+
+  return pattern;
 }
 
 /*

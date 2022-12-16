@@ -25,6 +25,18 @@ class EndDrawer extends StatelessWidget {
               targetShape: life.shape.value,
             ),
           ),
+        ),
+        MaterialButton(
+          child: const Text('打开 RLE 文件'),
+          onPressed: () async {
+            final pattern = await openRleFile(context, life);
+
+            if (pattern != null) {
+              await life.setCells(pattern.cells);
+              // ignore: use_build_context_synchronously
+              Navigator.pop(context);
+            }
+          },
         )
       ],
     );
