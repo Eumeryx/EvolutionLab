@@ -78,7 +78,7 @@ class LifeState {
 
   Future<void> setCells(List<Position> newCells) async {
     await _life.setCells(cells: newCells);
-    cells.value = newCells;
+    cells.value = await _life.getCells();
   }
 
   Future<void> cleanCells() => _life.cleanCells();
