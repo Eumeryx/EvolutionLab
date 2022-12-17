@@ -136,9 +136,81 @@ class _ResetShapeDialogState extends State<ResetShapeDialog> {
   }
 }
 
-Future<Pattern?> openRleFile(BuildContext context, LifeState life) async {
+// 弹框显示 pattern 信息并设置到网格，成功返回 true
+Future<bool?> showPatternInfo(BuildContext context, LifeState life, Pattern pattern) {
+  var center = true;
+  var cleanCell = true;
+  final shape = pattern.header.getShape();
+  final moreShape = !life.shape.value.include(shape);
+
+  return showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('RLE 信息'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          pattern.header.toWidget(context: context),
+          StatefulBuilder(
+            builder: (context, setState) => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('清除网格'),
+                Switch(
+                  value: cleanCell,
+                  onChanged: (i) => setState(() => cleanCell = i),
+                ),
+                const Text('居中'),
+                Switch(
+                  value: center,
+                  onChanged: (i) => setState(() => center = i),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          child: Text(moreShape ? '尺寸过大，点此扩大网格' : '确认'),
+          onPressed: () async {
+            if (moreShape) {
+              await showDialog(
+                context: context,
+                builder: (context) => ResetShapeDialog(
+                  life,
+                  targetShape: shape,
+                  clean: false,
+                  title: '调整网格大小',
+                  moreTarget: true,
+                ),
+              );
+            }
+
+            if (life.shape.value.include(shape)) {
+              var cells = pattern.cells;
+
+              if (center) {
+                final offset = shape.getCenterOffset(life.shape.value);
+                cells = cells.applyOffset(offset);
+              }
+
+              if (cleanCell) await life.cleanCells();
+
+              await life.setCells(cells);
+
+              Navigator.of(context).pop(true);
+            }
+          },
+        )
+      ],
+    ),
+  );
+}
+
+// 从文件打开一个 RLE 文件，成功返回 true
+Future<bool?> openRleFile(BuildContext context, LifeState life) async {
   const title = '请选择一个 RLE 文件';
-  Pattern? pattern;
   FilePickerResult? filePicker;
 
   if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
@@ -153,76 +225,13 @@ Future<Pattern?> openRleFile(BuildContext context, LifeState life) async {
   }
 
   final path = filePicker?.files.single.path;
-  if (path == null) return pattern;
+  if (path == null) return false;
 
   try {
     final str = await File(path).readAsString();
     var rle = await bridge.decodeRle(rle: str);
 
-    var center = true;
-    var cleanCell = true;
-    final shape = rle.header.getShape();
-    final moreShape = !life.shape.value.include(shape);
-
-    pattern = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('RLE 信息'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            rle.header.toWidget(context: context),
-            StatefulBuilder(
-              builder: (context, setState) => Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('清除网格'),
-                  Switch(
-                    value: cleanCell,
-                    onChanged: (i) => setState(() => cleanCell = i),
-                  ),
-                  const Text('居中'),
-                  Switch(
-                    value: center,
-                    onChanged: (i) => setState(() => center = i),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            child: Text(moreShape ? '尺寸过大，点此扩大网格' : '确认'),
-            onPressed: () async {
-              if (moreShape) {
-                await showDialog(
-                  context: context,
-                  builder: (context) => ResetShapeDialog(
-                    life,
-                    targetShape: shape,
-                    clean: false,
-                    title: '调整网格大小',
-                    moreTarget: true,
-                  ),
-                );
-              }
-
-              if (life.shape.value.include(shape)) {
-                if (center) {
-                  final offset = shape.getCenterOffset(life.shape.value);
-                  rle = rle.applyOffset(offset);
-                }
-
-                if (cleanCell) await life.cleanCells();
-
-                Navigator.of(context).pop(rle);
-              }
-            },
-          )
-        ],
-      ),
-    );
+    return showPatternInfo(context, life, rle);
   } catch (e) {
     showDialog(
       context: context,
@@ -231,9 +240,9 @@ Future<Pattern?> openRleFile(BuildContext context, LifeState life) async {
         content: Text(e.toString()),
       ),
     );
-  }
 
-  return pattern;
+    return false;
+  }
 }
 
 /*

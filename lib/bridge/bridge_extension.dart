@@ -19,6 +19,12 @@ extension ImplShape on Shape {
 
 extension ImplPosition on Position {
   Rect toRect(double width) => Rect.fromLTWH(x * width, y * width, width, width);
+
+  Position operator +(Position offset) => Position(x: x + offset.x, y: y + offset.y);
+}
+
+extension ImplListPosition on List<Position> {
+  List<Position> applyOffset(Position offset) => map((ori) => ori + offset).toList();
 }
 
 extension ImplHeader on Header {
@@ -53,22 +59,6 @@ extension ImplHeader on Header {
           ),
         ],
       );
-}
-
-extension ImplPattern on Pattern {
-  Pattern applyOffset(Position offset) {
-    return Pattern(
-      header: Header(
-        name: header.name,
-        owner: header.owner,
-        comment: header.comment,
-        rule: header.rule,
-        x: header.x + offset.x,
-        y: header.y + offset.y,
-      ),
-      cells: cells.map((e) => Position(x: e.x + offset.x, y: e.y + offset.y)).toList(),
-    );
-  }
 }
 
 extension ImplBoundary on Boundary {
