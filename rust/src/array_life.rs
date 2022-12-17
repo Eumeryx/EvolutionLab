@@ -10,9 +10,11 @@ pub struct ArrayLife {
 
 impl ArrayLife {
     pub fn new(shape: Shape, boundary: Boundary) -> Self {
+        // 先转置形状，把 ndarray 的列主序变成 RLE 的行主序， 再扩大一圈，方便处理边界
+        let shape = shape.t().add_scalar(2);
+
         Self {
-            // 扩大一圈，方便处理边界
-            board: Array2::<u8>::zeros((shape.x + 2, shape.y + 2)),
+            board: Array2::<u8>::zeros((shape.x, shape.y)),
             boundary,
         }
     }
@@ -113,9 +115,10 @@ impl LifeAPI for ArrayLife {
         let inner_board = self.inner_cells();
         let mut cells = vec![];
 
-        for x in 0..inner_board.nrows() {
-            for y in 0..inner_board.ncols() {
-                if inner_board[[x, y]] == 1 {
+        // ndarray 经过转置所以 x 和 y 是反的
+        for y in 0..inner_board.nrows() {
+            for x in 0..inner_board.ncols() {
+                if inner_board[[y, x]] == 1 {
                     cells.push(Position { x, y });
                 }
             }
@@ -128,7 +131,7 @@ impl LifeAPI for ArrayLife {
         let mut inner_board = self.inner_cells_mut();
 
         for Position { x, y } in cells {
-            inner_board[[x, y]] = 1;
+            inner_board[[y, x]] = 1; // ndarray 经过转置所以 x 和 y 是反的
         }
     }
 
@@ -148,7 +151,7 @@ impl LifeAPI for ArrayLife {
     }
 
     fn set_shape(&mut self, shape: Shape, clean: Option<bool>) {
-        let (n, m) = (shape.x + 2, shape.y + 2);
+        let Shape {x: n, y: m} = shape.t().add_scalar(2);
         let mut new = Array2::<u8>::zeros((n, m));
 
         if clean == Some(false) {
@@ -160,5 +163,17 @@ impl LifeAPI for ArrayLife {
         }
 
         self.board = new;
+    }
+}
+
+impl Shape {
+    /// 转置形状，把 ndarray 的列主序变成 RLE 的行主序
+    fn t(self) -> Self {
+        Self {x: self.y, y: self.x}
+    }
+
+    /// x 和 y 各加上一个值
+    fn add_scalar(self, rhs: usize) -> Self {
+        Self { x: self.x + rhs, y: self.y + rhs }
     }
 }
