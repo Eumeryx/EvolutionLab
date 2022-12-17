@@ -43,7 +43,7 @@ class EvolutionLab extends StatefulWidget {
   State<EvolutionLab> createState() => _EvolutionLabState();
 }
 
-class _EvolutionLabState extends State<EvolutionLab> {
+class _EvolutionLabState extends State<EvolutionLab> with WidgetsBindingObserver {
   LifeState get life => widget.life;
 
   @override
@@ -56,5 +56,25 @@ class _EvolutionLabState extends State<EvolutionLab> {
       floatingActionButton: ControllerButton(life),
       resizeToAvoidBottomInset: false,
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+        life.pause(); // 后台时暂停
+        break;
+      case AppLifecycleState.resumed:
+        setState(() {});
+        break;
+      default:
+        break;
+    }
   }
 }
