@@ -1,13 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import './utils.dart';
 import '../life/state.dart';
 import '../bridge/bridge.dart';
-import '../bridge//bridge_extension.dart';
+import '../bridge/bridge_extension.dart';
 
-class EndDrawer extends StatelessWidget {
+class EndDrawer extends StatefulWidget {
   const EndDrawer(this.life, {super.key});
+
+  final LifeState life;
+
+  @override
+  State<EndDrawer> createState() => _EndDrawerState();
+}
+
+class _EndDrawerState extends State<EndDrawer> {
+  LifeState get life => widget.life;
+
+  bool isSetting = true;
+  final lifeWiki = Uri.parse('https://conwaylife.com/wiki/Main_Page');
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(child: isSetting ? _Setting(life) : CollectList(life)),
+        ButtonBar(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () => setState(() => isSetting = true),
+            ),
+            IconButton(
+              icon: const Icon(Icons.star),
+              onPressed: () => setState(() => isSetting = false),
+            ),
+            IconButton(
+              icon: const Icon(Icons.info),
+              onPressed: () async => await launchUrl(lifeWiki),
+            )
+          ],
+        )
+      ],
+    );
+  }
+}
+
+class _Setting extends StatelessWidget {
+  const _Setting(this.life);
 
   final LifeState life;
 
@@ -29,10 +71,7 @@ class EndDrawer extends StatelessWidget {
         MaterialButton(
           child: const Text('打开 RLE 文件'),
           onPressed: () async {
-            final pattern = await openRleFile(context, life);
-
-            if (pattern != null) {
-              await life.setCells(pattern.cells);
+            if (true == await openRleFile(context, life)) {
               // ignore: use_build_context_synchronously
               Navigator.pop(context);
             }
@@ -74,6 +113,37 @@ class SetBoundary extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class CollectList extends StatelessWidget {
+  const CollectList(this.life, {super.key});
+
+  final LifeState life;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: life.patternCollectList.length(),
+      separatorBuilder: (_, i) => const Divider(),
+      itemBuilder: (context, index) => FutureBuilder(
+        future: life.patternCollectList.getPattern(index),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Padding(
+              padding: const EdgeInsets.all(8),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                child: snapshot.data!.header.toWidget(),
+                onTap: () => showPatternInfo(context, life, snapshot.data!),
+              ),
+            );
+          } else {
+            return const CircularProgressIndicator();
+          }
+        },
+      ),
     );
   }
 }

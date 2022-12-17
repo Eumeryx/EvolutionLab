@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../bridge/bridge.dart';
+import '../assets/pattern.dart';
 
 class LifeState {
   late Life _life;
 
   final cells = ValueNotifier<List<Position>>([]);
   final shape = ValueNotifier<Shape>(Shape(x: 50, y: 25));
+  late PatternCollectList patternCollectList;
 
   Boundary _boundary = Boundary.None;
   Boundary get boundary => _boundary;
 
   Future<void> initState() async {
+    patternCollectList = PatternCollectList();
+    patternCollectList.init();
+
     final defaultPattern = await bridge.defaultPattern();
     cells.value = defaultPattern.cells;
 

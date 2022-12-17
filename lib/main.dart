@@ -1,4 +1,3 @@
-import 'package:evolution_lab/ui/drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -6,6 +5,7 @@ import './life/state.dart';
 import './life/renderer.dart';
 import './ui/button.dart';
 import './ui/utils.dart';
+import './ui/drawer.dart';
 
 void main() async {
   // 横屏，去状态栏
