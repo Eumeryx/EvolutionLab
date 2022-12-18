@@ -49,6 +49,7 @@ class _EvolutionLabState extends State<EvolutionLab> with WidgetsBindingObserver
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawerEdgeDragWidth: 0,
       endDrawer: Drawer(child: EndDrawer(life)),
       body: InteractiveViewer(
         maxScale: 1000,

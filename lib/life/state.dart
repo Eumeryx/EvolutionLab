@@ -7,7 +7,7 @@ class LifeState {
   late Life _life;
 
   final cells = ValueNotifier<List<Position>>([]);
-  final shape = ValueNotifier<Shape>(Shape(x: 50, y: 25));
+  final shape = ValueNotifier<Shape>(Shape(x: 100, y: 50));
   late PatternCollectList patternCollectList;
 
   Boundary _boundary = Boundary.None;

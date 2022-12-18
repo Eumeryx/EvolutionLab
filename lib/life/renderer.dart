@@ -62,7 +62,7 @@ class _GridPainter extends CustomPainter {
 
   final gridPaint = Paint()
     ..isAntiAlias
-    ..color = const Color.fromARGB(255, 180, 195, 210)
+    ..color = const Color.fromARGB(255, 210, 210, 210)
     ..style = PaintingStyle.stroke;
 
   @override
