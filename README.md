@@ -1,16 +1,36 @@
-# evolution_lab
+# EvolutionLab
 
-A new Flutter project.
+康威生命游戏模拟器
 
-## Getting Started
+## 功能列表
 
-This project is a starting point for a Flutter application.
+- [x] 演化及显示细胞
+- [x] 暂停与恢复
+- [x] 调节演化速度
+- [x] 单步演化
+- [x] 随机生命
+- [ ] 回退
+- [ ] 状态显示
+- [x] 调整网格大小
+- [x] 缩放与移动
+- [ ] 编辑单一细胞状态
+- [x] 打开 RLE 记录的生命模式
+- [ ] 在当前网格中交互式的插入生命模式
 
-A few resources to get you started if this is your first Flutter project:
+## 支持平台
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- [x] Android
+- [x] Linux
+- [x] Windows (未经测试)
+- [ ] MacOS (无设备)
+- [ ] IOS (无设备)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 如何运行
+
+配置好 `Flutter` 和 `Rust` 环境后，运行以下命令：
+
+```
+$ flutter run
+```
+
+![](image/Screenshot_20221218_230458.png)
