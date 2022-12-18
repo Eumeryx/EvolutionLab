@@ -48,17 +48,20 @@ class _EvolutionLabState extends State<EvolutionLab> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawerEdgeDragWidth: 0,
-      endDrawer: Drawer(child: EndDrawer(life)),
-      body: InteractiveViewer(
-        maxScale: 1000,
-        child: Center(
-          child: LifeRenderer(life.shape, life.cells),
+    return SaveDialog(
+      life: life,
+      child: Scaffold(
+        drawerEdgeDragWidth: 0,
+        endDrawer: Drawer(child: EndDrawer(life)),
+        body: InteractiveViewer(
+          maxScale: 1000,
+          child: Center(
+            child: LifeRenderer(life.shape, life.cells),
+          ),
         ),
+        floatingActionButton: ControllerButton(life),
+        resizeToAvoidBottomInset: false,
       ),
-      floatingActionButton: ControllerButton(life),
-      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -66,6 +69,12 @@ class _EvolutionLabState extends State<EvolutionLab> with WidgetsBindingObserver
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    life.dispose();
+    super.dispose();
   }
 
   @override

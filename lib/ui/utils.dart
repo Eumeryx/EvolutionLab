@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_window_close/flutter_window_close.dart';
 
 import '../life/state.dart';
 import '../bridge/bridge.dart';
@@ -241,6 +242,47 @@ Future<bool?> openRleFile(BuildContext context, LifeState life) async {
     );
 
     return false;
+  }
+}
+
+class SaveDialog extends StatelessWidget {
+  const SaveDialog({required this.life, required this.child, super.key});
+
+  final Widget child;
+  final LifeState life;
+
+  @override
+  Widget build(BuildContext context) {
+    Future<bool> showSaveDialog() async {
+      return await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(title: const Text('保存当前状态?'), actions: [
+              ElevatedButton(
+                child: const Text('保存并退出'),
+                onPressed: () async {
+                  await life.saveState();
+                  return Navigator.of(context).pop(true);
+                },
+              ),
+              ElevatedButton(
+                child: const Text('直接退出'),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ]);
+          });
+    }
+
+    if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {
+      FlutterWindowClose.setWindowShouldCloseHandler(showSaveDialog);
+
+      return child;
+    } else {
+      return WillPopScope(
+        onWillPop: showSaveDialog,
+        child: child,
+      );
+    }
   }
 }
 

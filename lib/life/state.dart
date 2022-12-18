@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../bridge/bridge.dart';
 import '../assets/pattern.dart';
+import '../bridge/bridge_extension.dart';
 
 class LifeState {
   late Life _life;
@@ -9,6 +11,7 @@ class LifeState {
   final cells = ValueNotifier<List<Position>>([]);
   final shape = ValueNotifier<Shape>(Shape(x: 100, y: 50));
   late PatternCollectList patternCollectList;
+  late SharedPreferences _sharedPreferences;
 
   Boundary _boundary = Boundary.None;
   Boundary get boundary => _boundary;
@@ -16,12 +19,39 @@ class LifeState {
   Future<void> initState() async {
     patternCollectList = PatternCollectList();
     patternCollectList.init();
+    _sharedPreferences = await SharedPreferences.getInstance();
 
-    final defaultPattern = await bridge.defaultPattern();
-    cells.value = defaultPattern.cells;
+    final prevBoundary = _sharedPreferences.getString('boundary');
+    _boundary = _boundary.fromName(prevBoundary);
 
+    final prevPattern = _sharedPreferences.getString('prev_pattern');
+    _sharedPreferences.remove('prev_pattern');
+
+    Pattern pattern;
+    if (prevPattern == null) {
+      pattern = await bridge.defaultPattern();
+    } else {
+      try {
+        pattern = await bridge.decodeRle(rle: prevPattern);
+        shape.value = Shape(x: pattern.header.x, y: pattern.header.y);
+      } catch (_) {
+        pattern = await bridge.defaultPattern();
+      }
+    }
+
+    cells.value = pattern.cells;
     _life = await bridge.create(shape: shape.value, boundary: _boundary);
-    await _life.setCells(cells: defaultPattern.cells);
+    await _life.setCells(cells: pattern.cells);
+  }
+
+  Future<bool> saveState() async {
+    return _sharedPreferences.setString(
+      'prev_pattern',
+      await bridge.encodeRle(
+        header: Header(x: shape.value.x, y: shape.value.y),
+        cells: cells.value,
+      ),
+    );
   }
 
   /*
@@ -91,6 +121,8 @@ class LifeState {
   Future<void> setBoundary(Boundary boundary) async {
     _life.setBoundary(boundary: boundary);
     _boundary = boundary;
+
+    _sharedPreferences.setString('boundary', _boundary.name);
   }
 
   void dispose() {
