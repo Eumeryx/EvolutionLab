@@ -39,6 +39,7 @@ class _ControllerButtonState extends State<ControllerButton> {
 
   late List<Widget> subButtonList = [
     FloatingActionButton.small(
+      tooltip: '菜单',
       child: const Icon(Icons.more_vert),
       onPressed: () => Scaffold.of(context).openEndDrawer(),
     ),
@@ -46,6 +47,7 @@ class _ControllerButtonState extends State<ControllerButton> {
     _RandSlider(life),
     const SizedBox(height: 2),
     FloatingActionButton.small(
+      tooltip: '单步演化',
       onPressed: life.next,
       child: const Icon(Icons.skip_next),
     ),
@@ -71,6 +73,7 @@ class _SpeedSliderState extends State<_SpeedSlider> {
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton.small(
+      tooltip: '调节速度',
       child: const Icon(Icons.fast_forward),
       onPressed: () => showPopupWindow(
         context,
@@ -116,6 +119,7 @@ class _RandSliderState extends State<_RandSlider> {
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton.small(
+      tooltip: '随机生命',
       child: const Icon(Icons.shuffle),
       onPressed: () => showPopupWindow(
         context,

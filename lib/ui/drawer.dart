@@ -30,14 +30,17 @@ class _EndDrawerState extends State<EndDrawer> {
         ButtonBar(
           children: [
             IconButton(
+              tooltip: '设置',
               icon: const Icon(Icons.settings),
               onPressed: () => setState(() => isSetting = true),
             ),
             IconButton(
+              tooltip: '收藏',
               icon: const Icon(Icons.star),
               onPressed: () => setState(() => isSetting = false),
             ),
             IconButton(
+              tooltip: 'LifeWiki',
               icon: const Icon(Icons.info),
               onPressed: () async => await launchUrl(lifeWiki),
             )
