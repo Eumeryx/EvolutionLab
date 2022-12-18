@@ -50,8 +50,11 @@ class _EvolutionLabState extends State<EvolutionLab> with WidgetsBindingObserver
   Widget build(BuildContext context) {
     return Scaffold(
       endDrawer: Drawer(child: EndDrawer(life)),
-      body: Center(
-        child: LifeRenderer(life.shape, life.cells),
+      body: InteractiveViewer(
+        maxScale: 1000,
+        child: Center(
+          child: LifeRenderer(life.shape, life.cells),
+        ),
       ),
       floatingActionButton: ControllerButton(life),
       resizeToAvoidBottomInset: false,
