@@ -28,8 +28,6 @@ extension ImplListPosition on List<Position> {
 }
 
 extension ImplHeader on Header {
-  Shape getShape() => Shape(x: x, y: y);
-
   Widget toWidget({BuildContext? context}) => Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +53,7 @@ extension ImplHeader on Header {
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [Text('Size: ${x}x$y'), Text('Rule: $rule')],
+            children: [Text('Size: ${shape.x}x${shape.y}'), Text('Rule: $rule')],
           ),
         ],
       );

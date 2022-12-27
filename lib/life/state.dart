@@ -33,7 +33,7 @@ class LifeState {
     } else {
       try {
         pattern = await bridge.decodeRle(rle: prevPattern);
-        shape.value = Shape(x: pattern.header.x, y: pattern.header.y);
+        shape.value = pattern.header.shape;
       } catch (_) {
         pattern = await bridge.defaultPattern();
       }
@@ -48,8 +48,10 @@ class LifeState {
     return _sharedPreferences.setString(
       'prev_pattern',
       await bridge.encodeRle(
-        header: Header(x: shape.value.x, y: shape.value.y),
-        cells: cells.value,
+        pattern: Pattern(
+          header: Header(shape: shape.value),
+          cells: cells.value,
+        ),
       ),
     );
   }

@@ -55,11 +55,7 @@ fn wire_decode_rle_impl(port_: MessagePort, rle: impl Wire2Api<String> + UnwindS
         },
     )
 }
-fn wire_encode_rle_impl(
-    port_: MessagePort,
-    header: impl Wire2Api<Header> + UnwindSafe,
-    cells: impl Wire2Api<Vec<Position>> + UnwindSafe,
-) {
+fn wire_encode_rle_impl(port_: MessagePort, pattern: impl Wire2Api<Pattern> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
             debug_name: "encode_rle",
@@ -67,9 +63,8 @@ fn wire_encode_rle_impl(
             mode: FfiCallMode::Normal,
         },
         move || {
-            let api_header = header.wire2api();
-            let api_cells = cells.wire2api();
-            move |task_callback| Ok(encode_rle(api_header, api_cells))
+            let api_pattern = pattern.wire2api();
+            move |task_callback| Ok(encode_rle(api_pattern))
         },
     )
 }
@@ -250,6 +245,7 @@ impl Wire2Api<u32> for *mut u32 {
         unsafe { *support::box_from_leak_ptr(self) }
     }
 }
+
 impl Wire2Api<f64> for f64 {
     fn wire2api(self) -> f64 {
         self
@@ -287,8 +283,7 @@ impl support::IntoDart for Header {
             self.owner.into_dart(),
             self.comment.into_dart(),
             self.rule.into_dart(),
-            self.x.into_dart(),
-            self.y.into_dart(),
+            (*self.shape).into_dart(),
         ]
         .into_dart()
     }
@@ -304,7 +299,7 @@ impl support::IntoDartExceptPrimitive for Life {}
 
 impl support::IntoDart for Pattern {
     fn into_dart(self) -> support::DartAbi {
-        vec![self.header.into_dart(), self.cells.into_dart()].into_dart()
+        vec![(*self.header).into_dart(), self.cells.into_dart()].into_dart()
     }
 }
 impl support::IntoDartExceptPrimitive for Pattern {}
@@ -315,6 +310,13 @@ impl support::IntoDart for Position {
     }
 }
 impl support::IntoDartExceptPrimitive for Position {}
+
+impl support::IntoDart for Shape {
+    fn into_dart(self) -> support::DartAbi {
+        vec![self.x.into_dart(), self.y.into_dart()].into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for Shape {}
 
 // Section: executor
 

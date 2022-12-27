@@ -95,8 +95,8 @@ pub fn decode_rle(rle: String) -> Result<Pattern> {
     Pattern::decode_rle(&rle[..])
 }
 
-pub fn encode_rle(header: Header, cells: Vec<Position>) -> String {
-    Pattern { header, cells }.encode_rle()
+pub fn encode_rle(pattern: Pattern) -> String {
+    pattern.encode_rle()
 }
 
 pub fn default_pattern() -> Pattern {

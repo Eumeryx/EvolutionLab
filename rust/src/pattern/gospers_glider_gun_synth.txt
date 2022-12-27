@@ -1,12 +1,11 @@
 Pattern {
-    header: Header {
+    header: Box::new(Header {
         name: Some("Gosper glider gun_synth".into()),
         owner: Some("Bill Gosper".into()),
         comment: Some("Glider synthesis of Gosper glider gun.\nwww.conwaylife.com/wiki/index.php?title=Gosper_glider_gun".into()),
         rule: Some("b3/s23".into()),
-        x: 47,
-        y: 14,
-    },
+        shape: Box::new(crate::bridge::Shape {x: 47, y: 14}),
+    }),
     cells:vec![
         Position {x: 16, y: 0},
         Position {x: 16, y: 1},

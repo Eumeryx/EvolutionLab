@@ -140,7 +140,7 @@ class _ResetShapeDialogState extends State<ResetShapeDialog> {
 Future<bool?> showPatternInfo(BuildContext context, LifeState life, Pattern pattern) {
   var center = true;
   var cleanCell = true;
-  final shape = pattern.header.getShape();
+  final shape = pattern.header.shape;
   final moreShape = !life.shape.value.include(shape);
 
   return showDialog(

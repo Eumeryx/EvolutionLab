@@ -1,6 +1,7 @@
 pub mod rle;
 
 pub(self) use crate::bridge::Position;
+use crate::bridge::Shape;
 
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Header {
@@ -8,12 +9,11 @@ pub struct Header {
     pub owner: Option<String>,
     pub comment: Option<String>,
     pub rule: Option<String>,
-    pub x: usize,
-    pub y: usize,
+    pub shape: Box<Shape>,
 }
 
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Pattern {
-    pub header: Header,
+    pub header: Box<Header>,
     pub cells: Vec<Position>,
 }

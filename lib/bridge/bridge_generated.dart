@@ -20,8 +20,7 @@ abstract class Evolution {
 
   FlutterRustBridgeTaskConstMeta get kDecodeRleConstMeta;
 
-  Future<String> encodeRle(
-      {required Header header, required List<Position> cells, dynamic hint});
+  Future<String> encodeRle({required Pattern pattern, dynamic hint});
 
   FlutterRustBridgeTaskConstMeta get kEncodeRleConstMeta;
 
@@ -96,16 +95,14 @@ class Header {
   final String? owner;
   final String? comment;
   final String? rule;
-  final int x;
-  final int y;
+  final Shape shape;
 
   Header({
     this.name,
     this.owner,
     this.comment,
     this.rule,
-    required this.x,
-    required this.y,
+    required this.shape,
   });
 }
 
@@ -232,15 +229,13 @@ class EvolutionImpl implements Evolution {
         argNames: ["rle"],
       );
 
-  Future<String> encodeRle(
-      {required Header header, required List<Position> cells, dynamic hint}) {
-    var arg0 = _platform.api2wire_box_autoadd_header(header);
-    var arg1 = _platform.api2wire_list_position(cells);
+  Future<String> encodeRle({required Pattern pattern, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_pattern(pattern);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_encode_rle(port_, arg0, arg1),
+      callFfi: (port_) => _platform.inner.wire_encode_rle(port_, arg0),
       parseSuccessData: _wire2api_String,
       constMeta: kEncodeRleConstMeta,
-      argValues: [header, cells],
+      argValues: [pattern],
       hint: hint,
     ));
   }
@@ -248,7 +243,7 @@ class EvolutionImpl implements Evolution {
   FlutterRustBridgeTaskConstMeta get kEncodeRleConstMeta =>
       const FlutterRustBridgeTaskConstMeta(
         debugName: "encode_rle",
-        argNames: ["header", "cells"],
+        argNames: ["pattern"],
       );
 
   Future<Pattern> defaultPattern({dynamic hint}) {
@@ -424,17 +419,24 @@ class EvolutionImpl implements Evolution {
     return raw as String;
   }
 
+  Header _wire2api_box_header(dynamic raw) {
+    return _wire2api_header(raw);
+  }
+
+  Shape _wire2api_box_shape(dynamic raw) {
+    return _wire2api_shape(raw);
+  }
+
   Header _wire2api_header(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return Header(
       name: _wire2api_opt_String(arr[0]),
       owner: _wire2api_opt_String(arr[1]),
       comment: _wire2api_opt_String(arr[2]),
       rule: _wire2api_opt_String(arr[3]),
-      x: _wire2api_usize(arr[4]),
-      y: _wire2api_usize(arr[5]),
+      shape: _wire2api_box_shape(arr[4]),
     );
   }
 
@@ -461,7 +463,7 @@ class EvolutionImpl implements Evolution {
     if (arr.length != 2)
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return Pattern(
-      header: _wire2api_header(arr[0]),
+      header: _wire2api_box_header(arr[0]),
       cells: _wire2api_list_position(arr[1]),
     );
   }
@@ -471,6 +473,16 @@ class EvolutionImpl implements Evolution {
     if (arr.length != 2)
       throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return Position(
+      x: _wire2api_usize(arr[0]),
+      y: _wire2api_usize(arr[1]),
+    );
+  }
+
+  Shape _wire2api_shape(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return Shape(
       x: _wire2api_usize(arr[0]),
       y: _wire2api_usize(arr[1]),
     );
@@ -554,16 +566,16 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
   }
 
   @protected
-  ffi.Pointer<wire_Header> api2wire_box_autoadd_header(Header raw) {
-    final ptr = inner.new_box_autoadd_header_0();
-    _api_fill_to_wire_header(raw, ptr.ref);
+  ffi.Pointer<wire_Life> api2wire_box_autoadd_life(Life raw) {
+    final ptr = inner.new_box_autoadd_life_0();
+    _api_fill_to_wire_life(raw, ptr.ref);
     return ptr;
   }
 
   @protected
-  ffi.Pointer<wire_Life> api2wire_box_autoadd_life(Life raw) {
-    final ptr = inner.new_box_autoadd_life_0();
-    _api_fill_to_wire_life(raw, ptr.ref);
+  ffi.Pointer<wire_Pattern> api2wire_box_autoadd_pattern(Pattern raw) {
+    final ptr = inner.new_box_autoadd_pattern_0();
+    _api_fill_to_wire_pattern(raw, ptr.ref);
     return ptr;
   }
 
@@ -577,6 +589,20 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
   @protected
   ffi.Pointer<ffi.Uint32> api2wire_box_autoadd_u32(int raw) {
     return inner.new_box_autoadd_u32_0(api2wire_u32(raw));
+  }
+
+  @protected
+  ffi.Pointer<wire_Header> api2wire_box_header(Header raw) {
+    final ptr = inner.new_box_header_0();
+    _api_fill_to_wire_header(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_Shape> api2wire_box_shape(Shape raw) {
+    final ptr = inner.new_box_shape_0();
+    _api_fill_to_wire_shape(raw, ptr.ref);
+    return ptr;
   }
 
   @protected
@@ -622,17 +648,27 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
     wireObj.ptr = apiObj.shareOrMove();
   }
 
-  void _api_fill_to_wire_box_autoadd_header(
-      Header apiObj, ffi.Pointer<wire_Header> wireObj) {
-    _api_fill_to_wire_header(apiObj, wireObj.ref);
-  }
-
   void _api_fill_to_wire_box_autoadd_life(
       Life apiObj, ffi.Pointer<wire_Life> wireObj) {
     _api_fill_to_wire_life(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_pattern(
+      Pattern apiObj, ffi.Pointer<wire_Pattern> wireObj) {
+    _api_fill_to_wire_pattern(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_shape(
+      Shape apiObj, ffi.Pointer<wire_Shape> wireObj) {
+    _api_fill_to_wire_shape(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_header(
+      Header apiObj, ffi.Pointer<wire_Header> wireObj) {
+    _api_fill_to_wire_header(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_shape(
       Shape apiObj, ffi.Pointer<wire_Shape> wireObj) {
     _api_fill_to_wire_shape(apiObj, wireObj.ref);
   }
@@ -642,12 +678,16 @@ class EvolutionPlatform extends FlutterRustBridgeBase<EvolutionWire> {
     wireObj.owner = api2wire_opt_String(apiObj.owner);
     wireObj.comment = api2wire_opt_String(apiObj.comment);
     wireObj.rule = api2wire_opt_String(apiObj.rule);
-    wireObj.x = api2wire_usize(apiObj.x);
-    wireObj.y = api2wire_usize(apiObj.y);
+    wireObj.shape = api2wire_box_shape(apiObj.shape);
   }
 
   void _api_fill_to_wire_life(Life apiObj, wire_Life wireObj) {
     wireObj.field0 = api2wire_MutexArrayLife(apiObj.field0);
+  }
+
+  void _api_fill_to_wire_pattern(Pattern apiObj, wire_Pattern wireObj) {
+    wireObj.header = api2wire_box_header(apiObj.header);
+    wireObj.cells = api2wire_list_position(apiObj.cells);
   }
 
   void _api_fill_to_wire_position(Position apiObj, wire_Position wireObj) {
@@ -794,23 +834,20 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
 
   void wire_encode_rle(
     int port_,
-    ffi.Pointer<wire_Header> header,
-    ffi.Pointer<wire_list_position> cells,
+    ffi.Pointer<wire_Pattern> pattern,
   ) {
     return _wire_encode_rle(
       port_,
-      header,
-      cells,
+      pattern,
     );
   }
 
   late final _wire_encode_rlePtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_Header>,
-              ffi.Pointer<wire_list_position>)>>('wire_encode_rle');
-  late final _wire_encode_rle = _wire_encode_rlePtr.asFunction<
-      void Function(
-          int, ffi.Pointer<wire_Header>, ffi.Pointer<wire_list_position>)>();
+          ffi.Void Function(
+              ffi.Int64, ffi.Pointer<wire_Pattern>)>>('wire_encode_rle');
+  late final _wire_encode_rle = _wire_encode_rlePtr
+      .asFunction<void Function(int, ffi.Pointer<wire_Pattern>)>();
 
   void wire_default_pattern(
     int port_,
@@ -993,16 +1030,6 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_bool_0 = _new_box_autoadd_bool_0Ptr
       .asFunction<ffi.Pointer<ffi.Bool> Function(bool)>();
 
-  ffi.Pointer<wire_Header> new_box_autoadd_header_0() {
-    return _new_box_autoadd_header_0();
-  }
-
-  late final _new_box_autoadd_header_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_Header> Function()>>(
-          'new_box_autoadd_header_0');
-  late final _new_box_autoadd_header_0 = _new_box_autoadd_header_0Ptr
-      .asFunction<ffi.Pointer<wire_Header> Function()>();
-
   ffi.Pointer<wire_Life> new_box_autoadd_life_0() {
     return _new_box_autoadd_life_0();
   }
@@ -1012,6 +1039,16 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_life_0');
   late final _new_box_autoadd_life_0 = _new_box_autoadd_life_0Ptr
       .asFunction<ffi.Pointer<wire_Life> Function()>();
+
+  ffi.Pointer<wire_Pattern> new_box_autoadd_pattern_0() {
+    return _new_box_autoadd_pattern_0();
+  }
+
+  late final _new_box_autoadd_pattern_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_Pattern> Function()>>(
+          'new_box_autoadd_pattern_0');
+  late final _new_box_autoadd_pattern_0 = _new_box_autoadd_pattern_0Ptr
+      .asFunction<ffi.Pointer<wire_Pattern> Function()>();
 
   ffi.Pointer<wire_Shape> new_box_autoadd_shape_0() {
     return _new_box_autoadd_shape_0();
@@ -1036,6 +1073,26 @@ class EvolutionWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_u32_0');
   late final _new_box_autoadd_u32_0 = _new_box_autoadd_u32_0Ptr
       .asFunction<ffi.Pointer<ffi.Uint32> Function(int)>();
+
+  ffi.Pointer<wire_Header> new_box_header_0() {
+    return _new_box_header_0();
+  }
+
+  late final _new_box_header_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_Header> Function()>>(
+          'new_box_header_0');
+  late final _new_box_header_0 =
+      _new_box_header_0Ptr.asFunction<ffi.Pointer<wire_Header> Function()>();
+
+  ffi.Pointer<wire_Shape> new_box_shape_0() {
+    return _new_box_shape_0();
+  }
+
+  late final _new_box_shape_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_Shape> Function()>>(
+          'new_box_shape_0');
+  late final _new_box_shape_0 =
+      _new_box_shape_0Ptr.asFunction<ffi.Pointer<wire_Shape> Function()>();
 
   ffi.Pointer<wire_list_position> new_list_position_0(
     int len,
@@ -1137,11 +1194,7 @@ class wire_Header extends ffi.Struct {
 
   external ffi.Pointer<wire_uint_8_list> rule;
 
-  @ffi.UintPtr()
-  external int x;
-
-  @ffi.UintPtr()
-  external int y;
+  external ffi.Pointer<wire_Shape> shape;
 }
 
 class wire_Position extends ffi.Struct {
@@ -1157,6 +1210,12 @@ class wire_list_position extends ffi.Struct {
 
   @ffi.Int32()
   external int len;
+}
+
+class wire_Pattern extends ffi.Struct {
+  external ffi.Pointer<wire_Header> header;
+
+  external ffi.Pointer<wire_list_position> cells;
 }
 
 class wire_MutexArrayLife extends ffi.Struct {

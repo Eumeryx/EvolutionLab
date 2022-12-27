@@ -1,4 +1,5 @@
 use anyhow::{Result, anyhow};
+
 use super::{Header, Pattern, Position};
 
 #[allow(dead_code)]
@@ -72,14 +73,14 @@ impl Pattern {
             return Err(anyhow!("parse failed: input is empty!"));
         }
 
-        if rle.header.x == 0 || rle.header.y == 0 {
+        if rle.header.shape.x == 0 || rle.header.shape.y == 0 {
             let (x, y) = rle
                 .cells
                 .iter()
                 .fold((0, 0), |(x, y), p| (x.max(p.x), y.max(p.y)));
 
-            rle.header.x = x;
-            rle.header.y = y;
+            rle.header.shape.x = x;
+            rle.header.shape.y = y;
         }
 
         Ok(rle)
@@ -164,8 +165,8 @@ impl Header {
                         match key {
                             None => key = Some(v.trim()),
                             Some("rule") => self.rule = Some(v.trim().into()),
-                            Some("x") => self.x = v.trim().parse().unwrap_or_default(),
-                            Some("y") => self.y = v.trim().parse().unwrap_or_default(),
+                            Some("x") => self.shape.x = v.trim().parse().unwrap_or_default(),
+                            Some("y") => self.shape.y = v.trim().parse().unwrap_or_default(),
                             _ => todo!(),
                         }
                     }
@@ -192,7 +193,7 @@ impl Header {
             }
         }
 
-        header += &format!("x = {}, y = {}", self.x, self.y);
+        header += &format!("x = {}, y = {}", self.shape.x, self.shape.y);
 
         if let Some(s) = &self.rule {
             header += &format!(", rule = {s}");

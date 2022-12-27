@@ -12,12 +12,8 @@ pub extern "C" fn wire_decode_rle(port_: i64, rle: *mut wire_uint_8_list) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_encode_rle(
-    port_: i64,
-    header: *mut wire_Header,
-    cells: *mut wire_list_position,
-) {
-    wire_encode_rle_impl(port_, header, cells)
+pub extern "C" fn wire_encode_rle(port_: i64, pattern: *mut wire_Pattern) {
+    wire_encode_rle_impl(port_, pattern)
 }
 
 #[no_mangle]
@@ -82,13 +78,13 @@ pub extern "C" fn new_box_autoadd_bool_0(value: bool) -> *mut bool {
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_header_0() -> *mut wire_Header {
-    support::new_leak_box_ptr(wire_Header::new_with_null_ptr())
+pub extern "C" fn new_box_autoadd_life_0() -> *mut wire_Life {
+    support::new_leak_box_ptr(wire_Life::new_with_null_ptr())
 }
 
 #[no_mangle]
-pub extern "C" fn new_box_autoadd_life_0() -> *mut wire_Life {
-    support::new_leak_box_ptr(wire_Life::new_with_null_ptr())
+pub extern "C" fn new_box_autoadd_pattern_0() -> *mut wire_Pattern {
+    support::new_leak_box_ptr(wire_Pattern::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -99,6 +95,16 @@ pub extern "C" fn new_box_autoadd_shape_0() -> *mut wire_Shape {
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_u32_0(value: u32) -> *mut u32 {
     support::new_leak_box_ptr(value)
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_header_0() -> *mut wire_Header {
+    support::new_leak_box_ptr(wire_Header::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_shape_0() -> *mut wire_Shape {
+    support::new_leak_box_ptr(wire_Shape::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -150,20 +156,33 @@ impl Wire2Api<String> for *mut wire_uint_8_list {
     }
 }
 
-impl Wire2Api<Header> for *mut wire_Header {
-    fn wire2api(self) -> Header {
-        let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<Header>::wire2api(*wrap).into()
-    }
-}
 impl Wire2Api<Life> for *mut wire_Life {
     fn wire2api(self) -> Life {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<Life>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<Pattern> for *mut wire_Pattern {
+    fn wire2api(self) -> Pattern {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<Pattern>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<Shape> for *mut wire_Shape {
     fn wire2api(self) -> Shape {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<Shape>::wire2api(*wrap).into()
+    }
+}
+
+impl Wire2Api<Box<Header>> for *mut wire_Header {
+    fn wire2api(self) -> Box<Header> {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<Header>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<Box<Shape>> for *mut wire_Shape {
+    fn wire2api(self) -> Box<Shape> {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<Shape>::wire2api(*wrap).into()
     }
@@ -176,8 +195,7 @@ impl Wire2Api<Header> for wire_Header {
             owner: self.owner.wire2api(),
             comment: self.comment.wire2api(),
             rule: self.rule.wire2api(),
-            x: self.x.wire2api(),
-            y: self.y.wire2api(),
+            shape: self.shape.wire2api(),
         }
     }
 }
@@ -197,6 +215,14 @@ impl Wire2Api<Vec<Position>> for *mut wire_list_position {
     }
 }
 
+impl Wire2Api<Pattern> for wire_Pattern {
+    fn wire2api(self) -> Pattern {
+        Pattern {
+            header: self.header.wire2api(),
+            cells: self.cells.wire2api(),
+        }
+    }
+}
 impl Wire2Api<Position> for wire_Position {
     fn wire2api(self) -> Position {
         Position {
@@ -238,8 +264,7 @@ pub struct wire_Header {
     owner: *mut wire_uint_8_list,
     comment: *mut wire_uint_8_list,
     rule: *mut wire_uint_8_list,
-    x: usize,
-    y: usize,
+    shape: *mut wire_Shape,
 }
 
 #[repr(C)]
@@ -253,6 +278,13 @@ pub struct wire_Life {
 pub struct wire_list_position {
     ptr: *mut wire_Position,
     len: i32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_Pattern {
+    header: *mut wire_Header,
+    cells: *mut wire_list_position,
 }
 
 #[repr(C)]
@@ -303,8 +335,7 @@ impl NewWithNullPtr for wire_Header {
             owner: core::ptr::null_mut(),
             comment: core::ptr::null_mut(),
             rule: core::ptr::null_mut(),
-            x: Default::default(),
-            y: Default::default(),
+            shape: core::ptr::null_mut(),
         }
     }
 }
@@ -313,6 +344,15 @@ impl NewWithNullPtr for wire_Life {
     fn new_with_null_ptr() -> Self {
         Self {
             field0: wire_MutexArrayLife::new_with_null_ptr(),
+        }
+    }
+}
+
+impl NewWithNullPtr for wire_Pattern {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            header: core::ptr::null_mut(),
+            cells: core::ptr::null_mut(),
         }
     }
 }
