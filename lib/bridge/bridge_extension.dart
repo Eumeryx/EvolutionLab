@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import './bridge.dart';
 
 extension ImplShape on Shape {
-  Size getCanvasSize(Size screenSize) {
+  double getCellWidth(Size screenSize) {
     final width = screenSize.width / x;
     final height = screenSize.height / y;
-    final cellWidth = height < width ? height : width;
-
-    return Size(x * cellWidth, y * cellWidth);
+    return height < width ? height : width;
   }
+
+  Size operator &(double cellWidth) => Size(x * cellWidth, y * cellWidth);
 
   bool include(Shape shape) => x >= shape.x && y >= shape.y;
 
@@ -21,10 +21,41 @@ extension ImplPosition on Position {
   Rect toRect(double width) => Rect.fromLTWH(x * width, y * width, width, width);
 
   Position operator +(Position offset) => Position(x: x + offset.x, y: y + offset.y);
+
+  bool operator <(Position rhs) => y < rhs.y || (y == rhs.y && x < rhs.x);
+
+  bool operator >(Position rhs) => y > rhs.y || (y == rhs.y && x > rhs.x);
 }
 
 extension ImplListPosition on List<Position> {
   List<Position> applyOffset(Position offset) => map((ori) => ori + offset).toList();
+
+  void singleCellFlip(Position position) {
+    if (isEmpty) {
+      add(position);
+    } else if (position < first || last < position) {
+      insert(position < first ? 0 : length, position);
+    } else {
+      int min = 0;
+      int max = length;
+
+      while (min < max) {
+        final int mid = min + ((max - min) >> 1);
+        final curr = this[mid];
+
+        if (curr < position) {
+          min = mid + 1;
+        } else if (curr > position) {
+          max = mid;
+        } else {
+          removeAt(mid);
+          return;
+        }
+      }
+
+      insert(min, position);
+    }
+  }
 }
 
 extension ImplHeader on Header {

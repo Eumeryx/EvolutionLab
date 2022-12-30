@@ -91,7 +91,9 @@ class LifeState {
   /*
   * 重新包装的 Rust 端 API
   */
-  void next() async {
+  Future<List<Position>> getCells() => _life.getCells();
+
+  Future<void> next() async {
     await _life.evolve();
     cells.value = await _life.getCells();
   }

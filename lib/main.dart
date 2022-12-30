@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import './life/state.dart';
-import './life/renderer.dart';
+import './life/editor_renderer.dart';
 import './ui/button.dart';
 import './ui/utils.dart';
 import './ui/drawer.dart';
@@ -22,6 +22,7 @@ void main() async {
   runApp(MaterialApp(
     home: EvolutionLab(life),
     theme: ThemeData(
+      materialTapTargetSize: MaterialTapTargetSize.padded,
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         elevation: 0,
         backgroundColor: Colors.blue.withAlpha(150),
@@ -46,6 +47,8 @@ class EvolutionLab extends StatefulWidget {
 class _EvolutionLabState extends State<EvolutionLab> with WidgetsBindingObserver {
   LifeState get life => widget.life;
 
+  final lifeEditorController = LifeEditorController();
+
   @override
   Widget build(BuildContext context) {
     return SaveDialog(
@@ -53,13 +56,11 @@ class _EvolutionLabState extends State<EvolutionLab> with WidgetsBindingObserver
       child: Scaffold(
         drawerEdgeDragWidth: 0,
         endDrawer: Drawer(child: EndDrawer(life)),
-        body: InteractiveViewer(
-          maxScale: 1000,
-          child: Center(
-            child: LifeRenderer(life.shape, life.cells),
-          ),
+        body: LifeEditorAndRenderer(
+          life,
+          lifeEditorController: lifeEditorController,
         ),
-        floatingActionButton: ControllerButton(life),
+        floatingActionButton: ControllerButton(life, lifeEditorController),
         resizeToAvoidBottomInset: false,
       ),
     );

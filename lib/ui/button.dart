@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:kumi_popup_window/kumi_popup_window.dart';
 
 import '../life/state.dart';
+import '../life/editor_renderer.dart';
 
 class ControllerButton extends StatefulWidget {
-  const ControllerButton(this.life, {super.key});
+  const ControllerButton(this.life, this.lifeEditorController, {super.key});
 
   final LifeState life;
+  final LifeEditorController lifeEditorController;
 
   @override
   State<ControllerButton> createState() => _ControllerButtonState();
@@ -14,6 +16,9 @@ class ControllerButton extends StatefulWidget {
 
 class _ControllerButtonState extends State<ControllerButton> {
   LifeState get life => widget.life;
+  LifeEditorController get editor => widget.lifeEditorController;
+
+  bool inEditing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -21,21 +26,22 @@ class _ControllerButtonState extends State<ControllerButton> {
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Column(children: life.isPaused ? subButtonList : []),
+        if (life.isPaused && !inEditing) ...subButtonList,
         Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            _SpeedSlider(life: life),
-            const SizedBox(width: 2),
-            FloatingActionButton.small(
-              child: Icon(life.isPaused ? Icons.play_arrow : Icons.pause),
-              onPressed: () => setState(() => life.isPaused ? life.resume() : life.pause()),
-            ),
-          ],
+          mainAxisSize: MainAxisSize.min,
+          children: inEditing ? editorButtonList : mainButtonList,
         ),
       ],
     );
   }
+
+  late List<Widget> mainButtonList = [
+    _SpeedSlider(life: life),
+    FloatingActionButton.small(
+      child: Icon(life.isPaused ? Icons.play_arrow : Icons.pause),
+      onPressed: () => setState(() => life.isPaused ? life.resume() : life.pause()),
+    ),
+  ];
 
   late List<Widget> subButtonList = [
     FloatingActionButton.small(
@@ -43,15 +49,37 @@ class _ControllerButtonState extends State<ControllerButton> {
       child: const Icon(Icons.more_vert),
       onPressed: () => Scaffold.of(context).openEndDrawer(),
     ),
-    const SizedBox(height: 2),
+    FloatingActionButton.small(
+      tooltip: '编辑',
+      child: const Icon(Icons.edit),
+      onPressed: () => setState(() => editor.canSingleCellFlip = inEditing = true),
+    ),
     _RandSlider(life),
-    const SizedBox(height: 2),
     FloatingActionButton.small(
       tooltip: '单步演化',
       onPressed: life.next,
       child: const Icon(Icons.skip_next),
     ),
-    const SizedBox(height: 2),
+  ];
+
+  late List<Widget> editorButtonList = [
+    FloatingActionButton.small(
+      tooltip: '完成',
+      child: const Icon(Icons.check),
+      onPressed: () async {
+        await life.cleanCells();
+        await life.setCells(life.cells.value);
+        setState(() => editor.canSingleCellFlip = inEditing = false);
+      },
+    ),
+    FloatingActionButton.small(
+      tooltip: '放弃',
+      child: const Icon(Icons.close),
+      onPressed: () async {
+        life.cells.value = await life.getCells();
+        setState(() => editor.canSingleCellFlip = inEditing = false);
+      },
+    ),
   ];
 }
 

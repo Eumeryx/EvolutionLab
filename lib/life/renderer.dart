@@ -4,36 +4,31 @@ import '../bridge/bridge.dart';
 import '../bridge/bridge_extension.dart';
 
 class LifeRenderer extends StatelessWidget {
-  const LifeRenderer(this.shape, this.cells, {super.key});
+  const LifeRenderer(this.cellWidth, this.size, this.cellsNotifier, {super.key});
 
-  final ValueNotifier<Shape> shape;
-  final ValueNotifier<List<Position>> cells;
+  final Size size;
+  final double cellWidth;
+  final ValueNotifier<List<Position>> cellsNotifier;
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-
-    return ValueListenableBuilder(
-        valueListenable: shape,
-        builder: (context, value, _) {
-          final canvasSize = value.getCanvasSize(screenSize);
-
-          return CustomPaint(
-            size: canvasSize,
-            painter: _CellPainter(cells, canvasSize.height / value.y),
-            child: RepaintBoundary(
-              child: CustomPaint(size: canvasSize, painter: _GridPainter(value)),
-            ),
-          );
-        });
+    return RepaintBoundary(
+      child: CustomPaint(
+        size: size,
+        painter: _CellPainter(cellsNotifier, cellWidth),
+        child: RepaintBoundary(
+          child: CustomPaint(size: size, painter: _GridPainter(cellWidth)),
+        ),
+      ),
+    );
   }
 }
 
 class _CellPainter extends CustomPainter {
   final double cellWidth;
-  final ValueNotifier<List<Position>> cells;
+  final ValueNotifier<List<Position>> cellsNotifier;
 
-  _CellPainter(this.cells, this.cellWidth) : super(repaint: cells);
+  _CellPainter(this.cellsNotifier, this.cellWidth) : super(repaint: cellsNotifier);
 
   final cellPaint = Paint()
     ..isAntiAlias = true
@@ -44,7 +39,7 @@ class _CellPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     var path = Path();
 
-    for (final c in cells.value) {
+    for (final c in cellsNotifier.value) {
       path.addRect(c.toRect(cellWidth));
     }
 
@@ -56,9 +51,9 @@ class _CellPainter extends CustomPainter {
 }
 
 class _GridPainter extends CustomPainter {
-  final Shape shape;
+  final double cellWidth;
 
-  _GridPainter(this.shape);
+  _GridPainter(this.cellWidth);
 
   final gridPaint = Paint()
     ..isAntiAlias
@@ -67,14 +62,12 @@ class _GridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final width = size.height / shape.y;
-
-    for (int x = 0; x <= shape.x; x++) {
-      canvas.drawLine(Offset(x * width, 0), Offset(x * width, size.height), gridPaint);
+    for (int x = 0; x <= size.width ~/ cellWidth; x++) {
+      canvas.drawLine(Offset(x * cellWidth, 0), Offset(x * cellWidth, size.height), gridPaint);
     }
 
-    for (var i = 0; i <= shape.y; i++) {
-      canvas.drawLine(Offset(0, i * width), Offset(size.width, i * width), gridPaint);
+    for (int y = 0; y <= size.height ~/ cellWidth; y++) {
+      canvas.drawLine(Offset(0, y * cellWidth), Offset(size.width, y * cellWidth), gridPaint);
     }
   }
 
