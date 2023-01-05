@@ -86,8 +86,11 @@ class PatternListView extends StatelessWidget {
       itemBuilder: (context, index) => FutureBuilder(
         future: patternList.get(index),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const CircularProgressIndicator();
+          } else {
             final pattern = snapshot.data!;
+            final inEditor = editor.inEditing;
 
             return Padding(
               padding: const EdgeInsets.all(8),
@@ -95,17 +98,19 @@ class PatternListView extends StatelessWidget {
                 behavior: HitTestBehavior.opaque,
                 child: pattern.header.toWidget(),
                 onTap: () {
-                  if (editor.inEditing == false) {
-                    showPatternInfo(context, life, pattern);
-                  } else {
-                    editor.insertPattern = pattern;
-                    Scaffold.of(context).closeEndDrawer();
-                  }
+                  showPatternInfo(
+                    context,
+                    life,
+                    pattern,
+                    clean: inEditor ? null : true,
+                    center: inEditor ? null : true,
+                    successCallback: inEditor ? (_) => editor.insertPattern = pattern : null,
+                  );
+
+                  if (inEditor) Scaffold.of(context).closeEndDrawer();
                 },
               ),
             );
-          } else {
-            return const CircularProgressIndicator();
           }
         },
       ),
@@ -123,20 +128,16 @@ class _Setting extends StatelessWidget {
     return Column(children: [
       MaterialButton(
         child: const Text('新建或扩展网格'),
-        onPressed: () => showDialog(
-          context: context,
-          builder: (_) => ResetShapeDialog(
-            life,
-            title: '新建或扩展网格',
-            targetShape: life.shape.value,
-          ),
+        onPressed: () => showAlertDialog(
+          context,
+          title: const Text('新建或扩展网格'),
+          content: ResetShapeDialog(life, clean: true, targetShape: life.shape),
         ),
       ),
       MaterialButton(
         child: const Text('打开 RLE 文件'),
         onPressed: () async {
           if (true == await openRleFile(context, life)) {
-            // ignore: use_build_context_synchronously
             Navigator.pop(context);
           }
         },
@@ -161,25 +162,23 @@ class SetBoundary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(child: Text('边界条件:', textAlign: TextAlign.center, textScaleFactor: 1.1)),
-        Expanded(
-          child: DropdownButtonHideUnderline(
-            child: StatefulBuilder(
-              builder: (context, setState) => DropdownButton(
-                items: items,
-                isExpanded: true,
-                value: life.boundary.name,
-                onChanged: (String? value) async {
-                  await life.setBoundary(life.boundary.fromName(value));
-                  setState(() {});
-                },
-              ),
+    return Row(children: [
+      const Expanded(child: Text('边界条件:', textAlign: TextAlign.center, textScaleFactor: 1.1)),
+      Expanded(
+        child: StatefulBuilder(
+          builder: (context, setState) => DropdownButtonHideUnderline(
+            child: DropdownButton(
+              items: items,
+              isExpanded: true,
+              value: life.boundary.name,
+              onChanged: (String? value) async {
+                await life.setBoundary(life.boundary.fromName(value));
+                setState(() {});
+              },
             ),
           ),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 }

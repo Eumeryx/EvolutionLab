@@ -11,7 +11,9 @@ extension ImplShape on Shape {
 
   Size operator &(double cellWidth) => Size(x * cellWidth, y * cellWidth);
 
-  bool include(Shape shape) => x >= shape.x && y >= shape.y;
+  bool operator >(Shape rhs) => x > rhs.x || y > rhs.y;
+
+  bool operator <=(Shape rhs) => x <= rhs.x && y <= rhs.y;
 
   Position getCenterOffset(Shape targetShape) =>
       Position(x: (targetShape.x - x) ~/ 2, y: (targetShape.y - y) ~/ 2);
@@ -68,7 +70,9 @@ extension ImplListPosition on List<Position> {
   void insertPattern(Pattern pattern, [Position? offset]) {
     var cells = offset == null ? pattern.cells : pattern.cells.applyOffset(offset);
 
-    if (cells.last <= first || last <= cells.first) {
+    if (isEmpty) {
+      addAll(cells);
+    } else if (cells.last <= first || last <= cells.first) {
       insertAll(
         cells.last <= first ? 0 : length,
         cells.sublist(

@@ -7,7 +7,7 @@ import './ui/button.dart';
 import './ui/utils.dart';
 import './ui/drawer.dart';
 
-void main() async {
+void main() {
   // 横屏，去状态栏
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
@@ -16,11 +16,8 @@ void main() async {
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
 
-  final life = LifeState();
-  await life.initState();
-
   runApp(MaterialApp(
-    home: EvolutionLab(life),
+    home: EvolutionLab(life: LifeState()),
     theme: ThemeData(
       materialTapTargetSize: MaterialTapTargetSize.padded,
       floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -36,7 +33,7 @@ void main() async {
 }
 
 class EvolutionLab extends StatefulWidget {
-  const EvolutionLab(this.life, {super.key});
+  const EvolutionLab({required this.life, super.key});
 
   final LifeState life;
 

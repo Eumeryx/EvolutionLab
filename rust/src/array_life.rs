@@ -154,7 +154,7 @@ impl LifeAPI for ArrayLife {
         let Shape {x: n, y: m} = shape.t().add_scalar(2);
         let mut new = Array2::<u8>::zeros((n, m));
 
-        if clean == Some(false) {
+        if clean != Some(true) {
             let old = &self.board;
             let n = n.min(old.nrows());
             let m = m.min(old.ncols());

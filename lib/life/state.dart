@@ -7,55 +7,65 @@ import '../bridge/bridge.dart';
 import '../assets/pattern.dart';
 import '../bridge/bridge_extension.dart';
 
-class LifeState {
-  late Life _life;
+typedef ShapeNotifier = ValueNotifier<Shape>;
+typedef CellsNotifier = ValueNotifier<List<Position>>;
 
-  final cells = ValueNotifier<List<Position>>([]);
-  final shape = ValueNotifier<Shape>(Shape(x: 100, y: 50));
+class Status {
+  int step = 0;
+  int count = 0;
+}
+
+class LifeState {
+  LifeState() {
+    _init();
+  }
+
+  late Life _life;
   late PatternAssets patternAssets;
   late SharedPreferences _sharedPreferences;
 
   Boundary _boundary = Boundary.None;
   Boundary get boundary => _boundary;
 
-  Future<void> initState() async {
-    rootBundle
-        .loadStructuredData('assets/pattern/index.json', (json) async => jsonDecode(json))
-        .then((json) => patternAssets = PatternAssets.fromJson(json));
+  final cellsNotifier = CellsNotifier([]);
+  List<Position> get cells => cellsNotifier.value;
+  set cells(List<Position> value) => cellsNotifier.value = value;
 
+  final shapeNotifier = ShapeNotifier(Shape(x: 100, y: 50));
+  Shape get shape => shapeNotifier.value;
+  set shape(Shape value) => shapeNotifier.value = value;
+
+  Future<void> _init() async {
     _sharedPreferences = await SharedPreferences.getInstance();
 
-    final prevBoundary = _sharedPreferences.getString('boundary');
-    _boundary = _boundary.fromName(prevBoundary);
-
-    final prevPattern = _sharedPreferences.getString('prev_pattern');
-    _sharedPreferences.remove('prev_pattern');
+    final boundary = _sharedPreferences.getString('boundary');
+    _boundary = _boundary.fromName(boundary);
 
     Pattern pattern;
-    if (prevPattern == null) {
+    try {
+      final prevPattern = _sharedPreferences.getString('prev_pattern');
+      _sharedPreferences.remove('prev_pattern');
+
+      pattern = await bridge.decodeRle(rle: prevPattern!);
+      shape = pattern.header.shape;
+    } catch (_) {
       pattern = await bridge.defaultPattern();
-    } else {
-      try {
-        pattern = await bridge.decodeRle(rle: prevPattern);
-        shape.value = pattern.header.shape;
-      } catch (_) {
-        pattern = await bridge.defaultPattern();
-      }
     }
 
-    cells.value = pattern.cells;
-    _life = await bridge.create(shape: shape.value, boundary: _boundary);
+    cells = pattern.cells;
+    _life = await bridge.create(shape: shape, boundary: _boundary);
     await _life.setCells(cells: pattern.cells);
+
+    patternAssets = await rootBundle
+        .loadStructuredData('assets/pattern/index.json', (json) async => jsonDecode(json))
+        .then((json) => PatternAssets.fromJson(json));
   }
 
   Future<bool> saveState() async {
     return _sharedPreferences.setString(
       'prev_pattern',
       await bridge.encodeRle(
-        pattern: Pattern(
-          header: Header(shape: shape.value),
-          cells: cells.value,
-        ),
+        pattern: Pattern(header: Header(shape: shape), cells: cells),
       ),
     );
   }
@@ -69,10 +79,7 @@ class LifeState {
 
   Stream<void> _createEvolveStream() async* {
     while (true) {
-      await Future.wait([_life.evolve(), Future.delayed(_delayed)]);
-      cells.value = await _life.getCells();
-
-      yield null;
+      yield await Future.wait([next(), Future.delayed(_delayed)]);
     }
   }
 
@@ -99,38 +106,34 @@ class LifeState {
 
   Future<void> next() async {
     await _life.evolve();
-    cells.value = await _life.getCells();
+    cells = await _life.getCells();
   }
 
   Future<void> rand(double distr) async {
     await _life.rand(distr: distr);
-    cells.value = await _life.getCells();
+    cells = await _life.getCells();
   }
 
-  Future<void> setShape(Shape newShape, {bool? clean}) async {
-    await _life.setShape(shape: newShape, clean: clean);
+  Future<void> setShape(Shape value, {bool? clean}) async {
+    await _life.setShape(shape: value, clean: clean);
 
-    if (clean == true) {
-      cells.value = [];
-    } else {
-      cells.value = await _life.getCells();
-    }
-
-    shape.value = newShape;
+    shape = value;
+    cells = clean == true ? [] : await _life.getCells();
   }
 
-  Future<void> setCells(List<Position> newCells) async {
-    await _life.setCells(cells: newCells);
-    cells.value = await _life.getCells();
+  Future<void> setCells(List<Position> value, {bool? clean}) async {
+    if (clean == true) await _life.cleanCells();
+    await _life.setCells(cells: value);
+    cells = await _life.getCells();
   }
 
   Future<void> cleanCells() => _life.cleanCells();
 
   Future<void> setBoundary(Boundary boundary) async {
-    _life.setBoundary(boundary: boundary);
+    await _life.setBoundary(boundary: boundary);
     _boundary = boundary;
 
-    _sharedPreferences.setString('boundary', _boundary.name);
+    await _sharedPreferences.setString('boundary', _boundary.name);
   }
 
   void dispose() {

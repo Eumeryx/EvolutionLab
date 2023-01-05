@@ -11,199 +11,184 @@ import '../life/state.dart';
 import '../bridge/bridge.dart';
 import '../bridge/bridge_extension.dart';
 
-// 重设网格形状的弹窗
-class ResetShapeDialog extends StatefulWidget {
-  const ResetShapeDialog(
-    this.life, {
-    required this.targetShape,
-    this.clean = true,
-    this.title = '新建',
-    this.moreTarget = false,
-    super.key,
-  });
+Future<T?> showAlertDialog<T>(
+  BuildContext context, {
+  Widget? content,
+  Widget? title,
+  List<Widget>? actions,
+}) {
+  return showDialog(
+    context: context,
+    builder: (context) => AlertDialog(title: title, content: content, actions: actions),
+  );
+}
 
-  // 清除现有细胞
-  final bool clean;
-  // 弹窗标题
-  final String title;
+// 重设网格形状的弹窗
+class ResetShapeDialog extends StatelessWidget {
   final LifeState life;
   // 目标形状
   final Shape targetShape;
   // 如果为真，必需大于目标形状
   final bool moreTarget;
+  // 清除现有细胞
+  final bool? clean;
 
-  @override
-  State<ResetShapeDialog> createState() => _ResetShapeDialogState();
-}
+  ResetShapeDialog(
+    this.life, {
+    required this.targetShape,
+    this.moreTarget = false,
+    this.clean,
+    super.key,
+  }) {
+    widthCtrl.text = targetShape.x.toString();
+    heightCtrl.text = targetShape.y.toString();
+  }
 
-class _ResetShapeDialogState extends State<ResetShapeDialog> {
-  String get title => widget.title;
-  LifeState get life => widget.life;
-  bool get moreTarget => widget.moreTarget;
-  Shape get targetShape => widget.targetShape;
-
-  bool fullScreen = true;
-  late bool cleanCell = widget.clean;
-  late Size size = MediaQuery.of(context).size;
-  late TextEditingController widthCtrl = TextEditingController(text: targetShape.x.toString());
-  late TextEditingController heightCtrl = TextEditingController(text: targetShape.y.toString());
+  final TextEditingController widthCtrl = TextEditingController();
+  final TextEditingController heightCtrl = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(title),
-      // 套一层 SingleChildScrollView 防止弹出键盘时遮盖输入框
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Expanded(flex: 2, child: Text('大小', textAlign: TextAlign.start)),
-                Expanded(
-                  child: TextField(
-                    autofocus: true,
-                    controller: widthCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (v) {
-                      if (fullScreen) {
-                        final width = int.tryParse(v) ?? 0;
-                        final height = size.height ~/ (size.width / width);
-                        heightCtrl.text = height.toString();
-                      }
-                    },
-                  ),
-                ),
-                const Expanded(child: Text('x', textAlign: TextAlign.center)),
-                Expanded(
-                  child: TextField(
-                    controller: heightCtrl,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (v) {
-                      if (fullScreen) {
-                        final height = int.tryParse(v) ?? 0;
-                        final width = size.width ~/ (size.height / height);
-                        widthCtrl.text = width.toString();
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('清除细胞'),
-                Switch(
-                  value: cleanCell,
-                  onChanged: (i) => setState(() => cleanCell = i),
-                ),
-                const Text('占满屏幕'),
-                Switch(
-                  value: fullScreen,
-                  onChanged: (i) => setState(() => fullScreen = i),
-                ),
-              ],
-            ),
-            TextButton(
-                child: const Text('确认'),
-                onPressed: () async {
-                  final shape = Shape(
-                    x: int.tryParse(widthCtrl.text) ?? 0,
-                    y: int.tryParse(heightCtrl.text) ?? 0,
-                  );
+    var clean = this.clean;
+    bool fullScreen = true;
+    final size = MediaQuery.of(context).size;
 
-                  if (moreTarget && !shape.include(targetShape)) {
-                    await showDialog(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        content: SelectableText('网格必需大于 ${targetShape.x}x${targetShape.y}!'),
-                      ),
-                    );
-                  } else {
-                    await life.setShape(shape, clean: cleanCell);
-                    Navigator.pop(context);
-                  }
-                })
-          ],
-        ),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(flex: 2, child: Text('大小', textAlign: TextAlign.start)),
+              Expanded(
+                child: TextField(
+                  autofocus: true,
+                  controller: widthCtrl,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onChanged: (value) {
+                    if (fullScreen) {
+                      final num = int.tryParse(value) ?? 0;
+                      heightCtrl.text = (num ~/ size.aspectRatio).toString();
+                    }
+                  },
+                ),
+              ),
+              const Expanded(child: Text('x', textAlign: TextAlign.center)),
+              Expanded(
+                child: TextField(
+                  controller: heightCtrl,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onChanged: (value) {
+                    if (fullScreen) {
+                      final num = int.tryParse(value) ?? 0;
+                      widthCtrl.text = (num * size.aspectRatio).toInt().toString();
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          StatefulBuilder(
+            builder: (context, setState) => Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                if (clean != null) const Text('清除细胞'),
+                if (clean != null)
+                  Switch(value: clean!, onChanged: (i) => setState(() => clean = i)),
+                const Text('占满屏幕'),
+                Switch(value: fullScreen, onChanged: (i) => setState(() => fullScreen = i)),
+              ],
+            ),
+          ),
+          TextButton(
+            child: const Text('确认'),
+            onPressed: () async {
+              final x = int.tryParse(widthCtrl.text) ?? 0;
+              final y = int.tryParse(heightCtrl.text) ?? 0;
+              final shape = Shape(x: 0 != x ? x : 1, y: 0 != y ? y : 1);
+
+              if (moreTarget && targetShape > shape) {
+                await showAlertDialog(
+                  context,
+                  content: SelectableText('网格必需大于 ${targetShape.x}x${targetShape.y}!'),
+                );
+              } else {
+                await life.setShape(shape, clean: clean);
+                Navigator.pop(context);
+              }
+            },
+          )
+        ],
       ),
     );
   }
 }
 
 // 弹框显示 pattern 信息并设置到网格，成功返回 true
-Future<bool?> showPatternInfo(BuildContext context, LifeState life, Pattern pattern) {
-  var center = true;
-  var cleanCell = true;
+Future<bool?> showPatternInfo(
+  BuildContext context,
+  LifeState life,
+  Pattern pattern, {
+  bool? clean,
+  bool? center,
+  void Function(Pattern pattern)? successCallback,
+}) {
   final shape = pattern.header.shape;
-  final moreShape = !life.shape.value.include(shape);
+  var moreShape = shape > life.shape;
 
-  return showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('RLE 信息'),
-      content: Column(
+  return showAlertDialog(
+    context,
+    title: const Text('RLE 信息'),
+    content: StatefulBuilder(
+      builder: (context, setState) => Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           pattern.header.toWidget(context: context),
-          StatefulBuilder(
-            builder: (context, setState) => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('清除网格'),
-                Switch(
-                  value: cleanCell,
-                  onChanged: (i) => setState(() => cleanCell = i),
-                ),
-                const Text('居中'),
-                Switch(
-                  value: center,
-                  onChanged: (i) => setState(() => center = i),
-                ),
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (clean != null) const Text('清除网格'),
+              if (clean != null) Switch(value: clean!, onChanged: (i) => setState(() => clean = i)),
+              if (center != null) const Text('居中'),
+              if (center != null)
+                Switch(value: center!, onChanged: (i) => setState(() => center = i)),
+            ],
           ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          child: Text(moreShape ? '尺寸过大，点此扩大网格' : '确认'),
-          onPressed: () async {
-            if (moreShape) {
-              await showDialog(
-                context: context,
-                builder: (context) => ResetShapeDialog(
-                  life,
-                  targetShape: shape,
-                  clean: false,
-                  title: '调整网格大小',
-                  moreTarget: true,
-                ),
-              );
-            }
+          TextButton(
+            child: Text(moreShape ? '尺寸过大，点此扩大网格' : '确认'),
+            onPressed: () async {
+              if (moreShape) {
+                await showAlertDialog(
+                  context,
+                  title: const Text('调整网格大小'),
+                  content: ResetShapeDialog(life, targetShape: shape, moreTarget: true),
+                );
+                return setState(() => moreShape = shape > life.shape);
+              }
 
-            if (life.shape.value.include(shape)) {
               var cells = pattern.cells;
 
-              if (center) {
-                final offset = shape.getCenterOffset(life.shape.value);
+              if (center == true) {
+                final offset = shape.getCenterOffset(life.shape);
                 cells = cells.applyOffset(offset);
               }
 
-              if (cleanCell) await life.cleanCells();
-
-              await life.setCells(cells);
+              if (successCallback != null) {
+                successCallback(pattern);
+              } else {
+                await life.setCells(cells, clean: clean);
+              }
 
               Navigator.of(context).pop(true);
-            }
-          },
-        )
-      ],
+            },
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -228,17 +213,14 @@ Future<bool?> openRleFile(BuildContext context, LifeState life) async {
   if (path == null) return false;
 
   try {
-    final str = await File(path).readAsString();
-    var rle = await bridge.decodeRle(rle: str);
+    final pattern = await File(path).readAsString().then((str) => bridge.decodeRle(rle: str));
 
-    return showPatternInfo(context, life, rle);
+    return showPatternInfo(context, life, pattern, clean: false, center: true);
   } catch (e) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('打开文件失败！'),
-        content: Text(e.toString()),
-      ),
+    showAlertDialog(
+      context,
+      title: const Text('打开文件失败！'),
+      content: Text(e.toString()),
     );
 
     return false;
@@ -254,23 +236,23 @@ class SaveDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Future<bool> showSaveDialog() async {
-      return await showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(title: const Text('保存当前状态?'), actions: [
-              ElevatedButton(
-                child: const Text('保存并退出'),
-                onPressed: () async {
-                  await life.saveState();
-                  return Navigator.of(context).pop(true);
-                },
-              ),
-              ElevatedButton(
-                child: const Text('直接退出'),
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-            ]);
-          });
+      return await showAlertDialog(
+        context,
+        title: const Text('保存当前状态?'),
+        actions: [
+          ElevatedButton(
+            child: const Text('保存并退出'),
+            onPressed: () async {
+              await life.saveState();
+              return Navigator.of(context).pop(true);
+            },
+          ),
+          ElevatedButton(
+            child: const Text('直接退出'),
+            onPressed: () => Navigator.of(context).pop(true),
+          ),
+        ],
+      );
     }
 
     if (Platform.isLinux || Platform.isMacOS || Platform.isWindows) {

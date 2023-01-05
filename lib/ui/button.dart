@@ -72,10 +72,10 @@ class _ControllerButtonState extends State<ControllerButton> {
           child: const Icon(Icons.check),
           onPressed: () async {
             if (editor.insertPattern != null) {
-              editor.applyInsertPattern(life.cells);
+              editor.applyInsertPattern(life.cellsNotifier);
             } else {
               await life.cleanCells();
-              await life.setCells(life.cells.value);
+              await life.setCells(life.cells);
               setState(() => editor.close());
             }
           },
@@ -87,7 +87,7 @@ class _ControllerButtonState extends State<ControllerButton> {
             if (editor.insertPattern != null) {
               editor.insertPattern = null;
             } else {
-              life.cells.value = await life.getCells();
+              life.cells = await life.getCells();
               setState(() => editor.close());
             }
           },
