@@ -18,6 +18,8 @@ extension ImplShape on Shape {
 }
 
 extension ImplPosition on Position {
+  Offset toOffset(double width) => Offset(x * width, y * width);
+
   Rect toRect(double width) => Rect.fromLTWH(x * width, y * width, width, width);
 
   Position operator +(Position offset) => Position(x: x + offset.x, y: y + offset.y);
@@ -25,6 +27,12 @@ extension ImplPosition on Position {
   bool operator <(Position rhs) => y < rhs.y || (y == rhs.y && x < rhs.x);
 
   bool operator >(Position rhs) => y > rhs.y || (y == rhs.y && x > rhs.x);
+
+  bool eq(Position rhs) => y == rhs.y && x == rhs.x;
+
+  bool operator <=(Position rhs) => this < rhs || eq(rhs);
+
+  bool operator >=(Position rhs) => this > rhs || eq(rhs);
 }
 
 extension ImplListPosition on List<Position> {
@@ -54,6 +62,32 @@ extension ImplListPosition on List<Position> {
       }
 
       insert(min, position);
+    }
+  }
+
+  void insertPattern(Pattern pattern, [Position? offset]) {
+    var cells = offset == null ? pattern.cells : pattern.cells.applyOffset(offset);
+
+    if (cells.last <= first || last <= cells.first) {
+      insertAll(
+        cells.last <= first ? 0 : length,
+        cells.sublist(
+          cells.first.eq(last) ? 1 : 0,
+          cells.last.eq(first) ? cells.length - 1 : cells.length,
+        ),
+      );
+    } else {
+      var start = 0;
+      for (final curr in cells) {
+        if (start != -1) start = indexWhere((e) => e >= curr, start);
+
+        if (start == -1) {
+          add(curr);
+        } else {
+          if (curr < this[start]) insert(start, curr);
+          start++;
+        }
+      }
     }
   }
 }

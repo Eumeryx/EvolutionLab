@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,15 +12,17 @@ class LifeState {
 
   final cells = ValueNotifier<List<Position>>([]);
   final shape = ValueNotifier<Shape>(Shape(x: 100, y: 50));
-  late PatternCollectList patternCollectList;
+  late PatternAssets patternAssets;
   late SharedPreferences _sharedPreferences;
 
   Boundary _boundary = Boundary.None;
   Boundary get boundary => _boundary;
 
   Future<void> initState() async {
-    patternCollectList = PatternCollectList();
-    patternCollectList.init();
+    rootBundle
+        .loadStructuredData('assets/pattern/index.json', (json) async => jsonDecode(json))
+        .then((json) => patternAssets = PatternAssets.fromJson(json));
+
     _sharedPreferences = await SharedPreferences.getInstance();
 
     final prevBoundary = _sharedPreferences.getString('boundary');

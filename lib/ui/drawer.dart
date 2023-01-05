@@ -3,13 +3,17 @@ import 'package:url_launcher/url_launcher.dart';
 
 import './utils.dart';
 import '../life/state.dart';
+import '../life/editor_renderer.dart';
 import '../bridge/bridge.dart';
 import '../bridge/bridge_extension.dart';
+import '../assets/pattern.dart';
+import '../assets/pattern_icons.dart';
 
 class EndDrawer extends StatefulWidget {
-  const EndDrawer(this.life, {super.key});
+  const EndDrawer(this.life, this.lifeEditorController, {super.key});
 
   final LifeState life;
+  final LifeEditorController lifeEditorController;
 
   @override
   State<EndDrawer> createState() => _EndDrawerState();
@@ -17,36 +21,94 @@ class EndDrawer extends StatefulWidget {
 
 class _EndDrawerState extends State<EndDrawer> {
   LifeState get life => widget.life;
+  LifeEditorController get editor => widget.lifeEditorController;
 
-  bool isSetting = true;
-  final lifeWiki = Uri.parse('https://conwaylife.com/wiki/Main_Page');
+  late String item = editor.inEditing ? 'stillLife' : 'setting';
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(child: isSetting ? _Setting(life) : CollectList(life)),
-        ButtonBar(
-          children: [
-            IconButton(
-              tooltip: '设置',
-              icon: const Icon(Icons.settings),
-              onPressed: () => setState(() => isSetting = true),
-            ),
-            IconButton(
-              tooltip: '收藏',
-              icon: const Icon(Icons.star),
-              onPressed: () => setState(() => isSetting = false),
-            ),
-            IconButton(
-              tooltip: 'LifeWiki',
-              icon: const Icon(Icons.info),
-              onPressed: () async => await launchUrl(lifeWiki),
-            )
-          ],
-        )
+        Expanded(child: itemMap[item]!),
+        ButtonBar(children: [
+          IconButton(
+            tooltip: '静物',
+            icon: const Icon(PatternIcons.box, size: 16),
+            onPressed: item == 'stillLife' ? null : () => setState(() => item = 'stillLife'),
+          ),
+          IconButton(
+            tooltip: '振荡器',
+            onPressed: item == 'oscillator' ? null : () => setState(() => item = 'oscillator'),
+            icon: const Icon(PatternIcons.blinker, size: 18),
+          ),
+          IconButton(
+            tooltip: '飞船',
+            icon: const Icon(PatternIcons.glider, size: 18),
+            onPressed: item == 'spaceship' ? null : () => setState(() => item = 'spaceship'),
+          ),
+          IconButton(
+            tooltip: '收藏',
+            icon: const Icon(Icons.star),
+            onPressed: item == 'collect' ? null : () => setState(() => item = 'collect'),
+          ),
+          IconButton(
+            tooltip: '设置',
+            icon: const Icon(Icons.settings),
+            onPressed: item == 'setting' ? null : () => setState(() => item = 'setting'),
+          ),
+        ]),
       ],
+    );
+  }
+
+  late Map<String, Widget> itemMap = {
+    'setting': _Setting(life),
+    'collect': PatternListView(life.patternAssets.collect, life, editor),
+    'stillLife': PatternListView(life.patternAssets.stillLife, life, editor),
+    'oscillator': PatternListView(life.patternAssets.oscillator, life, editor),
+    'spaceship': PatternListView(life.patternAssets.spaceship, life, editor),
+  };
+}
+
+class PatternListView extends StatelessWidget {
+  const PatternListView(this.patternList, this.life, this.editor, {super.key});
+
+  final LifeState life;
+  final LifeEditorController editor;
+  final PatternList patternList;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      itemCount: patternList.length,
+      separatorBuilder: (_, i) => const Divider(),
+      itemBuilder: (context, index) => FutureBuilder(
+        future: patternList.get(index),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            final pattern = snapshot.data!;
+
+            return Padding(
+              padding: const EdgeInsets.all(8),
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                child: pattern.header.toWidget(),
+                onTap: () {
+                  if (editor.inEditing == false) {
+                    showPatternInfo(context, life, pattern);
+                  } else {
+                    editor.insertPattern = pattern;
+                    Scaffold.of(context).closeEndDrawer();
+                  }
+                },
+              ),
+            );
+          } else {
+            return const CircularProgressIndicator();
+          }
+        },
+      ),
     );
   }
 }
@@ -58,31 +120,33 @@ class _Setting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        MaterialButton(
-          child: const Text('新建或扩展网格'),
-          onPressed: () => showDialog(
-            context: context,
-            builder: (_) => ResetShapeDialog(
-              life,
-              title: '新建或扩展网格',
-              targetShape: life.shape.value,
-            ),
+    return Column(children: [
+      MaterialButton(
+        child: const Text('新建或扩展网格'),
+        onPressed: () => showDialog(
+          context: context,
+          builder: (_) => ResetShapeDialog(
+            life,
+            title: '新建或扩展网格',
+            targetShape: life.shape.value,
           ),
         ),
-        MaterialButton(
-          child: const Text('打开 RLE 文件'),
-          onPressed: () async {
-            if (true == await openRleFile(context, life)) {
-              // ignore: use_build_context_synchronously
-              Navigator.pop(context);
-            }
-          },
-        ),
-        SetBoundary(life),
-      ],
-    );
+      ),
+      MaterialButton(
+        child: const Text('打开 RLE 文件'),
+        onPressed: () async {
+          if (true == await openRleFile(context, life)) {
+            // ignore: use_build_context_synchronously
+            Navigator.pop(context);
+          }
+        },
+      ),
+      SetBoundary(life),
+      MaterialButton(
+        child: const Text('LifeWiki'),
+        onPressed: () => launchUrl(Uri.parse('https://conwaylife.com/wiki/Main_Page')),
+      ),
+    ]);
   }
 }
 
@@ -116,37 +180,6 @@ class SetBoundary extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class CollectList extends StatelessWidget {
-  const CollectList(this.life, {super.key});
-
-  final LifeState life;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      itemCount: life.patternCollectList.length(),
-      separatorBuilder: (_, i) => const Divider(),
-      itemBuilder: (context, index) => FutureBuilder(
-        future: life.patternCollectList.getPattern(index),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Padding(
-              padding: const EdgeInsets.all(8),
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                child: snapshot.data!.header.toWidget(),
-                onTap: () => showPatternInfo(context, life, snapshot.data!),
-              ),
-            );
-          } else {
-            return const CircularProgressIndicator();
-          }
-        },
-      ),
     );
   }
 }

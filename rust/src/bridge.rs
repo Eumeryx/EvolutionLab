@@ -2,7 +2,7 @@ pub use std::sync::Mutex;
 use std::sync::MutexGuard;
 
 use anyhow::Result;
-use flutter_rust_bridge::RustOpaque;
+use flutter_rust_bridge::{frb, RustOpaque};
 
 pub use crate::array_life::ArrayLife;
 pub use crate::pattern::{Header, Pattern};
@@ -26,9 +26,12 @@ pub struct Shape {
 }
 
 // 细胞位置
+#[frb]
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Position {
+    #[frb(non_final)]
     pub x: usize,
+    #[frb(non_final)]
     pub y: usize,
 }
 

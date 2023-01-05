@@ -165,8 +165,8 @@ class Pattern {
 }
 
 class Position {
-  final int x;
-  final int y;
+  int x;
+  int y;
 
   Position({
     required this.x,

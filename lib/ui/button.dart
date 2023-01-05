@@ -18,18 +18,16 @@ class _ControllerButtonState extends State<ControllerButton> {
   LifeState get life => widget.life;
   LifeEditorController get editor => widget.lifeEditorController;
 
-  bool inEditing = false;
-
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        if (life.isPaused && !inEditing) ...subButtonList,
+        if (life.isPaused && !editor.inEditing) ...subButtonList,
         Row(
           mainAxisSize: MainAxisSize.min,
-          children: inEditing ? editorButtonList : mainButtonList,
+          children: editor.inEditing ? editorButtonList() : mainButtonList,
         ),
       ],
     );
@@ -52,7 +50,7 @@ class _ControllerButtonState extends State<ControllerButton> {
     FloatingActionButton.small(
       tooltip: '编辑',
       child: const Icon(Icons.edit),
-      onPressed: () => setState(() => editor.canSingleCellFlip = inEditing = true),
+      onPressed: () => setState(() => editor.open()),
     ),
     _RandSlider(life),
     FloatingActionButton.small(
@@ -62,25 +60,45 @@ class _ControllerButtonState extends State<ControllerButton> {
     ),
   ];
 
-  late List<Widget> editorButtonList = [
-    FloatingActionButton.small(
-      tooltip: '完成',
-      child: const Icon(Icons.check),
-      onPressed: () async {
-        await life.cleanCells();
-        await life.setCells(life.cells.value);
-        setState(() => editor.canSingleCellFlip = inEditing = false);
-      },
-    ),
-    FloatingActionButton.small(
-      tooltip: '放弃',
-      child: const Icon(Icons.close),
-      onPressed: () async {
-        life.cells.value = await life.getCells();
-        setState(() => editor.canSingleCellFlip = inEditing = false);
-      },
-    ),
-  ];
+  List<Widget> editorButtonList() => [
+        if (editor.insertPattern == null)
+          FloatingActionButton.small(
+            tooltip: '插入',
+            child: const Icon(Icons.add),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
+          ),
+        FloatingActionButton.small(
+          tooltip: '完成',
+          child: const Icon(Icons.check),
+          onPressed: () async {
+            if (editor.insertPattern != null) {
+              editor.applyInsertPattern(life.cells);
+            } else {
+              await life.cleanCells();
+              await life.setCells(life.cells.value);
+              setState(() => editor.close());
+            }
+          },
+        ),
+        FloatingActionButton.small(
+          tooltip: '放弃',
+          child: const Icon(Icons.close),
+          onPressed: () async {
+            if (editor.insertPattern != null) {
+              editor.insertPattern = null;
+            } else {
+              life.cells.value = await life.getCells();
+              setState(() => editor.close());
+            }
+          },
+        ),
+      ];
+
+  @override
+  void initState() {
+    super.initState();
+    editor.insertPatternNotifier.addListener(() => setState(() {}));
+  }
 }
 
 class _SpeedSlider extends StatefulWidget {

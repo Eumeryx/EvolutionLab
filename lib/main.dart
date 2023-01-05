@@ -55,11 +55,8 @@ class _EvolutionLabState extends State<EvolutionLab> with WidgetsBindingObserver
       life: life,
       child: Scaffold(
         drawerEdgeDragWidth: 0,
-        endDrawer: Drawer(child: EndDrawer(life)),
-        body: LifeEditorAndRenderer(
-          life,
-          lifeEditorController: lifeEditorController,
-        ),
+        endDrawer: Drawer(child: EndDrawer(life, lifeEditorController)),
+        body: LifeEditorAndRenderer(life, controller: lifeEditorController),
         floatingActionButton: ControllerButton(life, lifeEditorController),
         resizeToAvoidBottomInset: false,
       ),
